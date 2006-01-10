@@ -1,0 +1,36 @@
+[% INCLUDE header.thtml %]
+
+<div class="span10">
+  
+  <div id="maincontent">
+    <div class="row">
+      <div class="span5">
+	<div id="stats">
+	  <h3>Tsung Datas</h3>
+	  <table class="table table-striped	">
+	    [% FOREACH key = datafiles.tsung.keys.sort %]
+	    <tr>
+	      <td><a href="data/$key">$key</a></td>
+	    </tr>
+	    [% END %]
+	  </table>
+	</div>
+      </div>
+
+      <div class="span5">
+	<div id="transaction">
+	  <h3>CSV files</h3>
+	  <table class="table table-striped">
+	    [% FOREACH key = datafiles.csv.keys.sort %]
+	    <tr>
+	      <td><a href="csv_data/$key">$key</a></td>
+	    </tr>
+	    [% END %]
+	  </table>
+	</div>
+      </div>
+    </div>
+  </div>  
+</div><!-- span10 -->
+
+[% INCLUDE footer.thtml %]
