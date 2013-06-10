@@ -1,0 +1,261 @@
+[% INCLUDE header.thtml %]
+
+<script type="text/javascript">
+   function graphOptions(title, div, ylabel) {
+   return {
+      legend: 'always',
+      title: '<p>'+title+'</p>',
+      titleHeight: 6,
+      ylabel: ylabel,
+      labelsDiv: div,
+      rollPeriod: 7,
+      showRoller: true}
+   };
+
+   function stockchange(chart, el, step) {
+       chart.setVisibility(el.id - step, el.checked);       
+   };
+</script>
+
+<div class="span10">
+  <div id="count" class="row-fluid" >
+    <h3>Response Time</h3>
+    <div class="span8">
+      <div id="tr_mean" style="width:590px; height:300px;"></div>
+    </div>
+    <div class="span2">
+      <div class="well">
+      <label for="0">
+	<input type="checkbox" id="100" onClick="stockchange(gtrans, this, 100)" checked>
+	page
+      </label>
+      
+      [% FOREACH key = data.keys %]
+      <label class="checkbox" for="[% 100 + loop.count %]">
+	<input type="checkbox" id="[% 100 + loop.count %]" onClick="stockchange(gtrans, this, 100)" checked>
+	$key
+      </label>
+      [% END %]
+      </div>
+      <div id="tr_mean_val" style="width:390px; min-height:15px;">-</div>
+    </div>
+  </div>
+
+  <div id="count" class="row-fluid">
+    <h3>Requests and connection establishment</h3>
+    <div class="span8">
+      <div id="perfs_mean" style="width:590px; height:300px;"></div>
+    </div>
+    <div class="span2">
+      <div class="well">
+	<label for="10">
+	  <input type="checkbox" id="10" onClick="stockchange(gperf, this, 10)" checked>
+	  connect
+	</label>
+	<label for="11">
+	  <input type="checkbox" id="11" onClick="stockchange(gperf, this, 10)" checked>
+	  request
+	</label>
+      </div>
+
+      <div id="tr_perfs_val" style="width:390px; min-height:15px;">-</div>
+    </div>
+  </div>   
+
+
+
+
+
+<div id="throughput">
+<h3>Throughput</h3> 
+
+<table>
+<tr><th>Transactions</th><th>Requests</th>
+</tr>
+<tr>
+ <td>
+<div id="tr_rate" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("tr_rate"),
+    "csv_data/graphes-Transactions-rate.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ <td>
+<div id="perfs_rate" style="width:500px; height:300px;"></div> 
+   <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("perfs_rate"),
+    "csv_data/graphes-Perfs-rate.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ </tr>
+[% IF async %]
+ <tr>
+    <th>Noack/Bidi</th>
+</tr>
+<tr>
+ <td>
+<div id="Async_rate" style="width:500px; height:300px;"></div> 
+   <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("Async_rate"),
+    "csv_data/graphes-Async-rate.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ </tr>
+[% END %]
+<tr><th>Network traffic</th><th>New Users</th></tr>
+<tr>
+ <td>
+<div id="size_rate" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("size_rate"),
+    "csv_data/graphes-Size-rate.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ <td>
+<div id="arrival_rate" style="width:500px; height:300px;"></div> 
+   <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("arrival_rate"),
+    "csv_data/graphes-Users_Arrival-rate.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ </tr>
+</table>
+</div>
+
+<div id="users">
+<h3>Simultaneous Users</h3> 
+<table>
+<tr><th>Simultaneous Users</th>
+[% IF match %]
+    <th>Matching responses</th>
+[% END %]
+</tr>
+<tr>
+<div id="user_sim" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("user_sim"),
+    "csv_data/graphes-Users-simultaneous.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+[% IF match %]
+<div id="match_rate" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("match_rate"),
+    "csv_data/graphes-Match-rate.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+[% END %]
+ </tr>
+</table>
+</div>
+
+[% IF os_mon %]
+<div id="os_mon">
+<h3>Server OS monitoring</h3> 
+<table>
+<tr><th>CPU%</th><th>Free Memory</th></tr>
+<tr>
+ <td>
+<div id="cpu_mean" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("cpu_mean"),
+    "csv_data/graphes-cpu-mean.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ <td>
+<div id="freemem_mean" style="width:500px; height:300px;"></div> 
+   <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("freemem_mean"),
+    "csv_data/graphes-freemem-mean.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ </tr>
+
+<tr><th>CPU Load</th></tr>
+<tr>
+ <td>
+<div id="load_mean" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("load_mean"),
+    "csv_data/graphes-load-mean.csv",
+	graphOptions
+  );
+</script> 
+ </td>
+ </tr>
+
+</table>
+</div>
+[% END %]
+
+[% IF http %]
+<div id="http_status">
+<h3>HTTP return code Status (rate)</h3> 
+<div id="http_code_rate" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("http_code_rate"),
+    "csv_data/graphes-HTTP_CODE-rate.csv",
+	graphOptions
+  );
+</script> 
+</div>
+[% END %]
+
+[% IF errors %]
+<div id="errors">
+<h3>Errors (rate)</h3> 
+<div id="errors_rate" style="width:500px; height:300px;"></div> 
+  <script type="text/javascript"> 
+  g2 = new Dygraph(
+    document.getElementById("errors_rate"),
+    "csv_data/graphes-Errors-rate.csv",
+	graphOptions
+  );
+</script> 
+</div>
+[% END %]
+
+<script type="text/javascript">
+  gtrans = new Dygraph(document.getElementById("tr_mean"),
+  "csv_data/graphes-Transactions-mean.csv",
+  graphOptions("Transactions","tr_mean_val","msec")
+  );
+
+  gperf = new Dygraph(document.getElementById("perfs_mean"),
+  "csv_data/graphes-Perfs-mean.csv",
+  graphOptions("","tr_perfs_val","msec")
+  );
+</script>
+
+[% INCLUDE footer.thtml %]
+
+
