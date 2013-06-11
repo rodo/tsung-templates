@@ -1,0 +1,884 @@
+#!/usr/bin/perl -w
+# -*- Mode: CPerl -*-
+#
+#  This code was developped by IDEALX (http://IDEALX.org/) and
+#  contributors (their names can be found in the CONTRIBUTORS file).
+#  Copyright (C) 2000-2004 IDEALX
+#  Copyright (C) 2005-2011 Nicolas Niclausse
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+
+# Version: $Id$
+
+# purpose: quick and dirty ugly hack to compute stats and plots graph
+# given a (set of) log file(s)  from the tsung tool.
+
+# dygraphs fonctionnality added by Bearstech (http://bearstech.com)
+# using dygraphs JavaScript Visualization Library (http://danvk.org/dygraphs/)
+
+use strict;
+use Getopt::Long;
+use vars qw ($help @files $dygraph $verbose $debug $noplot $noextra $version $stats
+             $template_dir $nohtml $template_dir $gnuplot $logy $rotate_xtics
+             $imgfmt $oldgnuplot @percentile);
+use File::Spec::Functions qw(rel2abs);
+use File::Basename;
+use File::Copy;
+use File::Copy::Recursive;
+
+my $tagvsn = '1.5.0';
+
+GetOptions( "help",\$help,
+            "verbose",\$verbose,
+            "debug",\$debug,
+            "stats=s",\$stats,
+            "gnuplot=s",\$gnuplot,
+            "version",\$version,
+            "logy",\$logy,
+            "dygraph",\$dygraph,
+            "noplot",\$noplot,
+            "tdir=s",\$template_dir,
+            "nohtml",\$nohtml,
+            "rotate-xtics",\$rotate_xtics,
+            "noextra",\$noextra,
+            "img_format=s",\$imgfmt,
+	    "percentile=i@", \@percentile
+          );
+
+&usage if $help or $Getopt::Long::error;
+&version if $version;
+
+my $extra = not $noextra;
+
+my $match =0;
+my $async =0;
+my $errors =0;
+my $maxval;
+my $os_mon_other;
+my $category;
+my $CPU_MAX = 3200; # cpu usage should never be higher than 3200% (32 cores at 100%)
+
+my $prefix ="/usr/local";
+
+unless ($template_dir) {
+    if (-d (dirname($0) . "/templates/")) {
+        $template_dir = dirname($0)."/templates/";
+    } elsif (-d "$ENV{HOME}/.tsung/templates/") {
+        $template_dir = "$ENV{HOME}/.tsung/templates/";
+    } elsif (-d "${prefix}/share/tsung/templates") {
+        $template_dir = "${prefix}/share/tsung/templates";
+    } elsif (-d "/usr/share/tsung/templates") {
+        $template_dir = "/usr/share/tsung/templates";
+    } elsif (-d "/usr/local/share/tsung/templates") {
+        $template_dir = "/usr/local/share/tsung/templates";
+    } else {
+        warn "Can't find template directory !";
+    }
+}
+
+$stats = "tsung.log" unless $stats;
+die "The stats file ($stats) does not exist, abort !" unless -e $stats;
+
+my $sdir = (fileparse($stats, ".log"))[1];
+my $sinode = (stat($sdir))[1];
+
+# tsung-fullstats.log is in the same directory as tsung.log
+my $fullstats = join("",(fileparse($stats, ".log"))[1],"tsung-fullstats.log");
+
+my $updir = join("",(fileparse($stats, ".log"))[1],"../");
+
+opendir( DATA_DIR, $updir) || die "Cannot open $updir\n";
+my ($odirs);
+while (my $file = readdir(DATA_DIR) ) {
+  next if ($file =~ m/^\./);
+  my ($device, $inode, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $mtime, $ctime, $blksize, $blocks) = stat("../$file");
+  my $key = $file;
+  $key =~ s/[-:]//g;
+  $odirs->{$key}->{"name"} = $file;
+  $odirs->{$key}->{"inode"} = $inode;
+}
+closedir(DATA_DIR);
+
+my $inode = "";
+
+my @ofiles = sort { $b <=> $a } (keys ($odirs));
+my ($next, $prev, $flag) = (0, 0, 0);
+while ( my $file = shift @ofiles ) {
+  print $odirs->{$file}->{"name"}." $file $prev $next $flag\n" if $debug;
+  $prev = $odirs->{$file}->{"name"} if ($flag);
+  $flag = 1 if ($odirs->{$file}->{"inode"} eq $sinode);
+  $next = $odirs->{$file}->{"name"} unless ($flag);
+  last if ($flag && $prev) ;
+}
+
+$imgfmt = "png" unless $imgfmt;
+my %imgfmt_list = ("png" => 1, "svg" => 1,  "pdf" => 1,  "ps" => 1); # hash of all the format we support to make search more efficient
+die "Image format \"$imgfmt\" not supported" unless $imgfmt_list{"$imgfmt"};
+
+my $datadir = "data"; # all data files are created in this subdirectory
+my $imgdir  = "images"; # all data files are created in this subdirectory
+my $gplotdir = "gnuplot_scripts"; # all data files are created in this subdirectory
+my $csvdir  = "csv_data"; # all data files are created in this subdirectory
+my $http; # true if http. add status code graphs in the HTML output
+my $bosh; # true if bosh. add bosh specific graphs in the HTML output
+
+my @dydirs = ($csvdir);
+my @gnuplotdirs=($gplotdir, $imgdir);
+my @dirs = ($datadir);
+push @dirs, @dydirs if $dygraph;
+push @dirs, @gnuplotdirs if not $dygraph;
+
+foreach my $dir (@dirs) {
+    unless (-d $dir) {
+        print "creating subdirectory $dir \n";
+        mkdir "$dir" or die "can't create directory $dir";
+    }
+}
+
+# check percentile value validity
+foreach (@percentile) {
+  die "Percentile must be < 100" if ($_ > 100);
+  die "Percentile must be > 0" if ($_ <= 0);
+}
+
+# import json only if percentile are used
+# test if fullstats file is present
+if (scalar(@percentile) > 0) {
+  use JSON;
+  die "The stats file ($fullstats) does not exist, abort !" unless -e $fullstats;
+}
+
+$gnuplot = "gnuplot" unless $gnuplot;
+my $oldgnuplot = is_oldgnuplot($gnuplot);
+$gnuplot .= " >> gnuplot.log 2>&1";
+
+&parse_stats_file($stats);
+&html_report() unless $nohtml;
+
+# returns 1 (=true) if gnuplot doesn't support the "set terminal png size x,y" specifications
+sub is_oldgnuplot {
+    # args
+    my $gnuplot    = shift;
+    my $version = `$gnuplot -V`;
+    if ($version =~ m /gnuplot (\d+).(\d+) patchlevel (\d+)/) {
+        my ($major, $minor,$patchlevel) = ($1,$2,$3);
+        return 0 if $major > 5;
+        return 1 if $major < 3;
+        return 1 if $minor <2; # does it work with gnuplot 4.1 or 4.0 ? we assume no.
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+sub gnuplot_has_cairo {
+    return (system("$gnuplot -e 'set term pngcairo' 2> /dev/null ") == 0)
+}
+
+# plot stats from file with gnuplot
+sub plot_stats {
+    # args:
+    my $names     = shift; # arrayref contaning data names
+    my $titles    = shift; # arrayref contaning data titles
+    my $datatype  = shift; # type of data (added in filenames)
+    my $timestamp = shift;
+    my $files     = shift; # arrayref contaning data files
+    my $ylabel    = shift;
+    my $logy      = shift; # if true use logarithmic scale for Y axis
+
+    # local var
+    my $style       = "linespoint"; # TODO: can be override in option
+    my $legend_loc  = "key left top"; # TODO: can be override in option
+    my $output_type;
+    my $filename; # temporary var
+    my $thumbnail_size = 0.5;
+
+    if  (scalar @{$files} == 0 ) {
+        warn "No data for $datatype\n";
+        return;
+    }
+
+    my $has_pngcairo = &gnuplot_has_cairo();
+    print STDERR "Using pngcairo support in gnuplot\n" if $verbose and $has_pngcairo;
+
+    $datatype = "unknown" unless $datatype;
+    open(GP,">$gplotdir/graphes-$datatype.gplot") or die "can't open graphes-$datatype.gplot: $!";
+    select GP;
+    foreach my $output_fmt ($imgfmt, "tn.png") {
+        my $output_ext;
+        my $output_type;
+        if (($output_fmt eq "png") || ($output_fmt eq "tn.png")) {
+            $output_ext = "png";
+            if ($has_pngcairo) {
+                $output_type = "pngcairo ";
+            } else {
+                $output_type = "png ";
+            }
+        } elsif ($output_fmt eq "ps") {
+            $output_type = "postscript color ";
+            $output_ext = "ps";
+        } elsif ($output_fmt eq "pdf") {
+            $output_type = "pdf color ";
+            $output_ext = "pdf";
+        } elsif ($output_fmt eq "svg") {
+            $output_type = "svg ";
+            $output_ext = "svg";
+        }
+        # gnuplot styles and options
+        print "set size $thumbnail_size,$thumbnail_size\n" if (($output_fmt eq "tn.png") and $oldgnuplot);
+        print "set xtics rotate\n"  if (($output_ext eq "png") and ($rotate_xtics));
+        print "set style data  $style\n";
+        if (($output_fmt eq "tn.png") and not $oldgnuplot  and ($output_type !~ /pngcairo/)) {
+            print "set terminal $output_type tiny size 320,240\n";
+        } elsif (($output_fmt eq "tn.png") and not $oldgnuplot) {
+            print "set terminal $output_type size 320,240 font 'Verdana,7' \n";
+        } elsif ((($output_ext eq "svg") or (($output_ext eq "png")) ) and not $oldgnuplot) {
+            print "set terminal $output_type size 1024,768\n";
+        } else {
+            print "set terminal $output_type\n";
+        }
+        print "set grid\n";
+        # remove border on top and right and set color to gray
+        print "set style line 11 lc rgb '#808080' lt 1\n";
+        print "set border 3 back ls 11\n";
+        print "set tics nomirror\n";
+        print "set style line 1 lc rgb '#8b1a0e' pt 1 ps 1 lt 2 lw 2\n"; # --- red
+        print "set style line 2 lc rgb '#5e9c36' pt 6 ps 1 lt 2 lw 2\n"; # --- green
+
+        my $d; # temporary var (title)
+        foreach $d (0..$#{$names}) {
+            # gnuplot headings
+            if ($output_fmt eq "tn.png") {
+                print "set output \"$imgdir/graphes-$datatype-@{$names}[$d]_$output_fmt\"\n";
+            } else  {
+                print "set output \"$imgdir/graphes-$datatype-@{$names}[$d].$output_ext\"\n";
+            }
+            print "set title \" @{$titles}[$d]\"\n";
+            if ($timestamp) {
+                print "set xlabel \"unit = $timestamp sec \"\n";
+            } else {
+                print "set xlabel \"time (sec of the running test)\"\n";
+            }
+            print "set ylabel \"".$ylabel->[$d]."\"\n" if $ylabel->[$d];
+            print "show title\n";
+            print "set $legend_loc\n";
+            print "set logscale y\n" if $logy;
+
+            print "plot ";
+            my $lineindex=0;
+            foreach $filename (@{$files}) {
+                $lineindex++;
+                print " \"$datadir/$filename\" using ";
+                # if $timestamp isn't defined, use the first column as timestamp
+                if ($timestamp) {
+                    print $d+1 ;
+                } else {
+                    print " 1:" .($d+2);
+                }
+                my $cur_title = $filename;
+                $cur_title =~ s/\.txt$//;
+                $cur_title =~ s/:os_mon//;
+                print " title \"$cur_title\" ls $lineindex" ;
+                print "," unless ($filename eq @{$files}[$#{$files}]); # unless last occurence
+            }
+            print "\n"; # plot done
+        }
+    }
+    close GP;
+    system("$gnuplot $gplotdir/graphes-$datatype.gplot") and warn "Error while running gnuplot: $!";
+}
+
+
+# plot stats from file with dygraph
+sub plot_stats_dygraph {
+  # args:
+  my $title     = shift;	# arrayref contaning data titles
+  my $datatype  = shift;	# type of data (added in filenames)
+  my $timestamp = shift;
+  my $files     = shift;	# arrayref contaning data files
+  my $ylabel    = shift;
+  my $logy      = shift;    # if true use logarithmic scale for Y axis
+
+  # local var
+  my $filename;			# temporary var
+  my $thumbnail_size = 0.5;
+  my $row;
+  my @rowdata;
+  my %info;
+  my $cur_title; #tmp var
+  my @fields;
+  my $time;
+  my $value;
+  my $count = 0;
+  if (scalar @{$files} == 0 ) {
+    warn "No data for $datatype\n";
+    return;
+  }
+
+  $datatype = "unknown" unless $datatype;
+  my $d;			# temporary var (title)
+  foreach $d (0..$#{$title}) {
+    #loop on all the kind of graph needed for a subject (transaction, user ...)
+    $info{'path'} = "$csvdir/graphes-$datatype-@{$title}[$d].csv";
+    @rowdata = ();
+    #if ($timestamp) {
+    #  print "set xlabel \"unit = $timestamp sec \"\n";
+    #} else {
+    #  print "set xlabel \"unit = sec \"\n";
+    #}
+    #print "set ylabel \"".$ylabel->[$d]."\"\n" if $ylabel->[$d];
+    foreach $filename (@{$files}) {
+      $cur_title = $filename;
+      $cur_title =~ s/\.txt$//;
+      $cur_title =~ s/:os_mon//;
+      open FILE, "$datadir/$filename";
+      #we go throught the file in order to complete row
+      $count = 1;
+      $rowdata[0] = ["time"] if not defined $rowdata[0];
+      push @{$rowdata[0]}, $cur_title;
+      #print "go for $cur_title\n";
+      while (<FILE>) {
+          @fields = split(/ /);
+          ($time, $value) = @fields[0,$d+1] if defined @fields[0,$d+1];
+          chomp($value);
+          chomp($time);
+          #print "$time : $value \n";
+          die if not defined $time ;
+          $rowdata[$count] = [$time] if not defined $rowdata[$count]; # new line
+          while (1) { #look for right time
+              my $actual = @{$rowdata[$count]}[0];
+              chomp($actual);
+              die unless defined $actual;
+              if ($time == $actual) {
+                  push @{$rowdata[$count]}, $value ;
+                  $count++;
+                  last;
+              } elsif ($time > $actual) {
+                  push @{$rowdata[$count]}, "" ;
+                  $count++;
+              } else {
+                  last;
+              }
+          }
+      }
+      close FILE; #FIXME : ugly open and close multiple time
+    }
+    open CSV, ">$csvdir/graphes-$datatype-@{$title}[$d].csv" or die $!;
+    foreach $row (@rowdata) {
+       print CSV (join(",", @{$row})." \n");
+    }
+    close CSV;
+  }
+}
+
+sub max {
+    my $value   = shift;
+    my $oldvalue= shift;
+    return $value unless $oldvalue;
+    return $value if $oldvalue < $value;
+    return $oldvalue;
+}
+
+sub min {
+    my $value   = shift;
+    my $oldvalue= shift;
+    return $value unless $oldvalue;
+    return $value if $oldvalue > $value;
+    return $oldvalue;
+}
+
+sub parse_stats_file {
+    my $file = shift;
+    my $data;
+    my $timestamp;
+    my $first_timestamp =0;
+    my $first_interval =0;
+    my $interval;
+
+    open (FILE,"<$file") or die "Can't open $file $!";
+    while (<FILE>) {
+        if (/^stats: (\S+)\s+(.*)$/) {
+            my $type = $1;
+            my $values = $2;
+            $type =~ s/page_resptime/page/g;
+            $type =~ s/response_time/request/g;
+            # handle new format of ts_os_mon : reformat as old one
+            if ($type =~ m/os_mon/) {
+                $type =~ s/\{(\S+)\,\"(\S+)\"\}/$1:$2/g;
+            } else {
+                $type =~ s/\{(\S+)\,\"(\S+)\"\}/$1:os_mon\@$2/g;
+            }
+            my ($rate,$mean,$stddev,$max,$min,$meanfb,$countfb) = split(/\s+/,$values);
+            if ($type =~ /^cpu:/ ) {
+                next if $values =~ /^0/; # skip when no data is available
+                next if $mean > $CPU_MAX; # skip bad value
+                $category->{$type} = "os_mon_cpu";
+            } elsif ($type =~ /^freemem:/) {
+                next if $values =~ /^0/; # skip when no data is available
+                $category->{$type} = "os_mon_free";
+            } elsif ($type =~ /^load:/) {
+                next if $values =~ /^0/; # skip when no data is available
+                $category->{$type} = "os_mon_load";
+            } elsif ($type =~ /^\w{4}packets:/) {
+                next if $values =~ /^0/; # skip when no data is available
+                $category->{$type} = "os_mon_packets";
+            } elsif ($type =~ /^(\w+):os_mon/) {
+                next if $values =~ /^0/; # skip when no data is available
+                $category->{$type} = "os_mon_other";
+                my $osname = $1;
+                push @{$os_mon_other}, $osname unless (grep {/^$osname$/ } @{$os_mon_other}) ;
+
+            } elsif ($type =~ /^\d+$/) {
+                $category->{$type} = "http_status";
+            } elsif ($type eq "request" or $type eq "page" or $type eq "session" or  $type eq "connect" or $type eq "async_rcv") {
+                $category->{$type} = "stats";
+            } elsif ($type =~ /^tr_/ or $type eq "page") {
+                $category->{$type} = "transaction";
+            } elsif ($type =~ "^size") {
+                $category->{$type} = "network";
+            } elsif ($type =~ /^error/) {
+                $category->{$type} = "error";
+             } elsif ($type =~ /^bidi/ or $type eq "request_noack") {
+                $async = 1;
+                 $category->{$type} = "count";
+            } elsif ($type =~ /match/) {
+                $match = 1;
+                $category->{$type} = "match";
+            } elsif ($type ne "users" and $type ne "connected"  and $type =~ /^job_/) {
+                $category->{$type} = "count";
+            } else {
+                $category->{$type} = "gauge";
+            }
+            if ($interval) {
+                $rate /= $interval;
+                $maxval->{'rate'}->{$type} = &max($rate, $maxval->{'rate'}->{$type});
+                $maxval->{'maxmean'}->{$type} = &max($mean, $maxval->{'maxmean'}->{$type});
+                $maxval->{'mean'}->{$type} = $meanfb;
+                $maxval->{'count'}->{$type} = &max($countfb, $maxval->{'count'}->{$type});
+                $maxval->{'minmean'}->{$type} = &min($mean, $maxval->{'minmean'}->{$type}) if $rate;
+            }
+            push @{$data->{$type}}, $timestamp . " ". $values;
+        } elsif (/^\# stats:\s+dump at\s+(\d+)/) {
+            $first_timestamp= $1 unless $first_timestamp;
+            $interval = ($timestamp) ? $timestamp : 0; # keep previous value
+            $timestamp = $1 - $first_timestamp;
+            $interval = $timestamp-$interval;
+            $first_interval= $interval if $interval and not $first_interval;
+        }
+    }
+    close FILE;
+    if ($nohtml) {
+        foreach my $key (sort keys %{$maxval->{'rate'}}) {
+            if ($key =~ /\d+/ or $key =~ /^size/) {
+                printf "Total $key = %7.2f\n", $maxval->{'mean'}->{$key};
+            } else {
+                printf "Mean  $key (max sample) = %7.2f\n", $maxval->{'mean'}->{$key};
+            }
+            printf "Rate  $key (max sample) = %7.2f\n",$maxval->{'rate'}->{$key};
+        }
+    }
+    my @time;
+    my @errors;
+    my @tps;
+    my @bosh_tps;
+    my @code;
+    my %extra_info = ();
+    my @session;
+    my @connect;
+    my @size;
+    my @match;
+    my @users;
+    my @users_rate;
+    my @transactions;
+    my @async;
+    my $key;
+    if ($interval != $first_interval) {
+        print "warn, last interval ($interval) not equal to the first, use the first one ($first_interval)\n";
+        $interval=$first_interval;
+    }
+  my @col = ("rate","mean","stddev","max_sample","min_sample"); #session, perfs et transaction
+  my @colcount = ("rate","total"); #http_code match, event, errirn users_arrivaln size
+  my @colusers = ("simultaneous","maximum_simultaneous"); #users
+  my @colasync = ("rate","total");			  #async
+    foreach $key (keys %{$data}) {
+        $key =~ s/\'//g;
+        open (TYPE, "> $datadir/$key.txt") or die "$!";
+        foreach my $data (@{$data->{$key}}) {
+      if (($key !~ /^users$/ and $key !~ /^connected$/ and $key !~ /^size_/  and $key !~ /^job_/) and $interval) { #
+                my @tmp;
+                my $time;
+                ($time, $data, @tmp) = split(/\s/,$data);
+                $data /= $interval;
+                $data = "$time $data @tmp";
+            } elsif ($key =~ /^size/) { # bits instead of bytes
+                my ($time, @tmp) = split(/\s/,$data);
+                @tmp = map {$_*8/(1024*$interval) } @tmp; # kb/s instead of Bytes/s
+                $data = "$time @tmp";
+            } elsif ($key =~ /^connected/ or  $key =~ /^job_/) {
+                my ($time,$rate, $cur) = split(/\s/,$data);
+                $data = "$time $cur $rate";
+            }
+            print TYPE $data ."\n";
+        }
+        if ($key eq "session") {
+            push @session, "$key.txt";
+        } elsif ($key =~ /^size/) {
+            push @size, "$key.txt";
+        } elsif ($key =~ /^users$/ or $key =~ /^connected$/  or $key =~ /^job_/) {
+            push @users, "$key.txt";
+        } elsif ($key =~ /users/) {
+            push @users_rate, "$key.txt";
+        } elsif ($key =~ /match/) {
+            push @match, "$key.txt";
+        } elsif ($key =~ /^error/) {
+            push @errors, "$key.txt";
+        } elsif ($key=~ /^bidi/ or $key eq "request_noack") {
+            push @async, "$key.txt";
+        } elsif ($key =~ /request$/ or $key eq "connect" or $key eq "async_rcv") {
+            push @tps, "$key.txt";
+        } elsif ($key eq "bosh_http_conn" or $key eq "bosh_http_req") {
+	    $bosh = 1;
+            push @bosh_tps, "$key.txt";
+        } elsif ($key =~ /^tr_/ or $key eq "page") {
+            push @transactions, "$key.txt";
+        } elsif ($key =~ /^\d+$/) {
+            $http = 1;
+            push @code, "$key.txt";
+        } elsif ($key =~ /^(\S+)?:\S+?@\S+$/) {
+            my $key_short_name = $1;
+            push(@{$extra_info{$key_short_name}}, "$key.txt");
+        } else {
+            push @time, "$key.txt";
+        }
+        close TYPE;
+    }
+  if (not $dygraph) {
+    plot_stats(\@col,\@col,"Session",undef,\@session,["sessions/sec"],$logy) unless $noplot;
+    plot_stats(\@colcount,["HTTP Code Response rate","total"], "HTTP_CODE",undef,\@code,["number/sec","total"],$logy) if not $noplot and @code;
+    plot_stats(\@colcount,\@colcount,"Bosh",undef,\@bosh_tps,["rate"],$logy) unless $noplot;
+    plot_stats(\@col,["Request and tcp/udp connection rate","Mean request (and connection) duration","stddev","max_sample","min_sample"],"Perfs",undef,\@tps,["Requests rate (r/sec)","Requests duration (msec)"],$logy) unless $noplot;
+    plot_stats(\@col,["Transaction and page rate", "Mean transaction and page duration","stddev","max_sample","min_sample"],"Transactions",undef,\@transactions,["transactions/sec","Transaction duration (msec)"],$logy) unless $noplot;
+    plot_stats(\@colcount,\@colcount,"Match",undef,\@match,["rate","rate"],$logy) unless $noplot;
+    plot_stats(\@colcount,\@colcount,"Event",undef,\@time,["rate","msec"],$logy) unless $noplot;
+    plot_stats(\@colasync,\@colasync,"Async",undef,\@async,["rate","rate"],$logy) unless $noplot;
+    plot_stats(\@colcount,\@colcount,"Errors",undef,\@errors,["errors/sec","total"],$logy) unless $noplot;
+    plot_stats(\@colusers,["Simultaneous users and opened TCP/UDP connections","maximum_simultaneous"],"Users",undef,\@users,["value", "total"],$logy) unless $noplot;
+    plot_stats(\@colcount,["Users arrival/departure rate", "Total users"],"Users_Arrival",undef,\@users_rate,["number of users/sec", "total"],$logy) unless $noplot;
+    plot_stats(\@colcount,["Network throughput","Total send/receive bytes"],"Size",undef,\@size,["Kbits/sec","total Kbits"],$logy) unless $noplot;
+  } else {
+    plot_stats_dygraph(\@col,"Session",undef,\@session,["sessions/sec"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colcount,"HTTP_CODE",undef,\@code,["number/sec","total"],$logy) if not $noplot and @code;
+    plot_stats_dygraph(\@colcount,"Bosh",undef,\@bosh_tps,["rate"],$logy) if not $noplot and @bosh_tps;
+    plot_stats_dygraph(\@col,"Perfs",undef,\@tps,["rate","msec"],$logy) unless $noplot;
+    plot_stats_dygraph(\@col,"Transactions",undef,\@transactions,["transactions/sec","msec"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colcount,"Match",undef,\@match,["rate","rate"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colcount,"Event",undef,\@time,["rate","msec"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colasync,"Async",undef,\@async,["rate","rate"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colcount,"Errors",undef,\@errors,["errors/sec","total"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colusers,"Users",undef,\@users,["value", "total"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colcount,"Users_Arrival",undef,\@users_rate,["number of users/sec", "total"],$logy) unless $noplot;
+    plot_stats_dygraph(\@colcount,"Size",undef,\@size,["Kbits/sec","total Kbits"],$logy) unless $noplot;
+  }
+    # Generate graphes for extra indicators (os_mon for example)
+    if (not $noplot and $extra and (scalar keys %extra_info) != 0 ) {
+        print STDOUT "Generation os_mon graphs\n" if $verbose;
+        foreach my $key (sort keys %extra_info) {
+            my $pos = index($key,":");
+            if (not $dygraph) {
+                plot_stats(\@col,\@col, $key, undef, \@{$extra_info{$key}}, [$key],$logy);
+            } else {
+                plot_stats_dygraph(\@col, $key, undef, \@{$extra_info{$key}}, [$key],$logy);
+            }
+        }
+    }
+    $extra=0 if (scalar keys %extra_info == 0 ); # no extra information available
+    $errors=1 unless (scalar @errors == 0 ); # no extra information available
+}
+
+sub html_report {
+    require Template;
+    my $titre     = 'Tsung ';
+    my $version   = $tagvsn;
+    my $contact   = 'tsung-users@process-one.net';
+    my $output   = 'index.html';
+    my $datatrans;
+    my $datamon;
+    my $tt = Template->new({
+                            INCLUDE_PATH => $template_dir,
+                            PRE_CHOMP    => 1,
+                            INTERPOLATE  => 1,
+                           }) or die "Template error " . Template->error();
+    my $xml_conf;
+    opendir (DIR, ".") or warn "can't open directory .";
+    while (my $file = readdir (DIR) ) {
+        if ($file =~ /.xml$/) {
+            $xml_conf= $file;
+        }
+    }
+
+    # lookup for templates files in templates_dir
+    my (@all_templates);
+    my (@standard_templates) = qw(header footer graph graph_dy);
+    opendir (TDIR, $template_dir) or warn "can't open directory $template_dir";
+    while (my $file = readdir (TDIR) ) {
+        if ($file =~ /(.*).thtml$/) {
+	  push(@all_templates, $1) unless ($1 ~~ @standard_templates);
+        }
+    }
+    my $inctrans = 1;
+    foreach my $type ("mean", "maxmean", "minmean") {
+        foreach my $data (keys % {$maxval->{$type}} ) {
+            next if ($data =~ m/^size/);
+            if ($data =~ m/os_mon/) {
+                $maxval->{$type}->{$data} = sprintf "%.2f",$maxval->{$type}->{$data};
+		$datamon->{(split("@",$data))[1]} = scalar(keys %$datamon) - 1;
+                next;
+	      }
+            next if not ($data eq "session" or $data eq "connect" or $data eq "request" or $data eq "page" or $data =~ m/^tr_/);
+            $maxval->{$type}->{$data} = &formattime($maxval->{$type}->{$data});
+	    if ($data =~ m/^tr_/ or $data eq "page") {
+	      unless ($datatrans->{$data}) {
+		$datatrans->{$data} = $inctrans;
+		$inctrans++;
+	      }
+	    }
+	  }
+      }
+    foreach my $size ("size_rcv", "size_sent") {
+        if ($maxval->{rate}->{$size}) {
+	  $maxval->{rate}->{$size} = &formatsize($maxval->{rate}->{$size}*8,"bits");
+            $maxval->{maxmean}->{$size} = &formatsize($maxval->{maxmean}->{$size},"B");
+        } else {
+	  warn "$size is equal to 0 !\n";
+        }
+      }
+
+    # compute percentiles
+    my $percentils;
+    if (scalar(@percentile) > 0) {
+
+      my $rdatas = &read_full($fullstats);
+
+      foreach my $percentil (@percentile) {
+	my $pp = "PCTL".$percentil;
+	foreach my $val (keys(%$rdatas)) {
+	  $maxval->{$pp}->{$val} = &formattime(&pperc($percentil, $val, $rdatas));
+	  print STDOUT "$pp $val : ".$maxval->{$pp}->{$val}."\n" if $debug;
+	}
+	$percentils->{title}->{$pp} = "PCTL".$percentil;
+      }
+    }
+
+    my $vars =
+      {
+         version     => $version,
+         os_mon      => $extra,
+         errors      => $errors,
+         title       => $titre,
+         subtitle    => "Stats Report",
+         http        => $http,
+         stats_subtitle => "Stats Report ",
+         graph_subtitle => "Graphs Report ",
+         contact     => $contact,
+         data        => $maxval,
+         cat_data    => $category,
+         conf        => $xml_conf,
+	 percentil   => $percentils,
+	 next        => $next,
+	 prev        => $prev
+        };
+
+    foreach my $template (@all_templates) {
+      $tt->process("$template.thtml", $vars, "$template.html") or die $tt->error(), "\n";
+      print "Generate $template.html\n" if $debug;
+    }
+
+    $vars =
+      {
+         version     => $version,
+         os_mon      => $extra,
+         errors      => $errors,
+         http        => $http,
+         match       => $match,
+         async       => $async,
+         bosh        => $bosh,
+         title       => $titre,
+         subtitle    => "Graphs Report",
+         stats_subtitle => "Stats Report ",
+         graph_subtitle => "Graphs Report ",
+         os_mon_other=> $os_mon_other,
+         contact     => $contact,
+         conf        => $xml_conf,
+         ext         => $imgfmt,
+         data        => $datatrans,
+         datamon     => $datamon,
+	 next        => $next,
+	 prev        => $prev
+        };
+  if (not $dygraph) {
+    $tt->process("graph.thtml", $vars, "graph.html") or die $tt->error(), "\n";
+  } else {
+    $tt->process("graph_dy.thtml", $vars, "graph.html") or die $tt->error(), "\n";
+    copy (($template_dir . "/dygraph-combined.js"), ".") or die "copy failed : $!";
+  }
+    File::Copy::Recursive::rcopy (($template_dir . "/static/"), "./static/") or die "copy failed : $!";
+}
+
+
+sub read_full {
+  #
+  # Reads the tsung-fullstats.log file
+  #
+  my ($file) = @_;
+  my $datas;
+  my $i = 0;
+  #[{sample,tr_graph,1459.018798828125}]
+
+  open (FILE,"<$file") or die "Can't open $file $!";
+  while (<FILE>) {
+    if (/\[?{sample,([a-z_]*),\[?([0-9\.,]*)\]?}/) {
+      #print STDOUT "$1 --  $2\n";
+      foreach (split(",", $2)) {
+	$datas->{$1}->{$i} = $_;
+	$i++;
+      }
+    }
+  }
+  close FILE;
+
+  return $datas;
+}
+
+sub pperc {
+  my ($pctl, $data, $rdatas) = @_;
+  my @allvalues;
+
+  my ($mkey, $mvalue);
+  my ($key, $value);
+
+  while (($mkey, $mvalue) = each(%$rdatas)) {
+    if ($mkey eq $data) {
+      while (($key, $value) = each(%$mvalue)) {
+	push(@allvalues, $value);
+      }
+    }
+  }
+
+  return percentile($pctl, \@allvalues);
+}
+
+
+sub percentile {
+  my ($p,$aref) = @_;
+  my $percentile = int($p * $#{$aref}/100);
+  return (@$aref)[$percentile];
+}
+
+
+sub usage {
+    print "this script is part of tsung version $tagvsn,
+Copyright (C) 2001-2004 IDEALX (http://IDEALX.org/)\n\n";
+    print "tsung comes with ABSOLUTELY NO WARRANTY; This is free software, and
+ou are welcome to redistribute it under certain conditions
+type `tsung_stats.pl --version` for details.\n\n";
+
+    print "Usage: $0 [<options>]\n","Available options:\n\t",
+    "[--help] (this help text)\n\t",
+    "[--verbose] (print all messages)\n\t",
+    "[--debug] (print receive without send messages)\n\t",
+    "[--dygraph] use dygraphs (http://danvk.org/dygraphs/) to render graphs\n\t",
+    "[--noplot]  (don't make graphics)\n\t",
+    "[--gnuplot <command>]  (path to the gnuplot binary)\n\t",
+    "[--nohtml]  (don't create HTML reports)\n\t",
+    "[--logy]  (logarithmic scale for Y axis)\n\t",
+    "[--tdir <template_dir>] (Path to the HTML tsung templates)\n\t",
+    "[--noextra  (don't generate graphics from extra data (os monitor, etc)\n\t",
+    "[--rotate-xtics  (rotate legend of x axes)\n\t",
+    "[--stats <file>] (stats file to analyse, default=tsung.log)\n\t",
+    "[--img_format <format>] (output format for images, default=png
+                                 available format: ps, svg, png, pdf)\n\t",
+    "[--percentile <percentile>] (percentile to be computed, multiple values
+                                     allowed)\n\t";
+    exit;
+}
+
+sub    affiche() {
+    my $name = shift;
+    my $value = shift;
+    return sprintf "#%7s = %.3f",$name,$value;
+}
+
+sub formattime {
+    my $value = shift;
+    return unless $value;
+    $value /=1000;
+    if ($value < 0.001) {
+        sprintf "%.3f msec",$value*1000;
+    } elsif ($value < 0.1) {
+        sprintf "%.2f msec",$value*1000;
+    } elsif ($value < 60) {
+        sprintf "%.2f sec",$value;
+    } elsif ($value < 3600) {
+        my $mn= int($value / 60);
+        $value = $value-($mn*60);
+        sprintf "%dmn  %dsec",$mn, $value;
+    } elsif ($value > 3600) {
+        my $h = int($value / 3600);
+        my $mn= int(($value -$h*3600) / 60);
+        $value = $value-($h*3600+$mn*60);
+        sprintf "%d h %dmn  %dsec",$h,$mn, $value;
+    } else {
+        sprintf "%.1f sec",$value;
+    }
+}
+sub formatsize {
+    my $value = shift;
+    my $unit = shift;
+    return unless $value;
+    if ($value < 1024) {
+        sprintf "%d $unit",$value;
+    } elsif ($value < 1024*1024) {
+        sprintf "%.2f K$unit",$value/1024;
+    } elsif ($value < 1024*1024*1024) {
+        sprintf "%.2f M$unit",$value/(1024*1024);
+    } else {
+        sprintf "%.2f G$unit",$value/(1024*1024*1024);
+    }
+}
+
+sub version {
+  print "this script is part of Tsung version $tagvsn
+
+Written by Nicolas Niclausse and Jean François Lecomte
+
+Copyright (C) 2001-2004 IDEALX (http://IDEALX.org/)
+Copyright (C) 2004-2011 Nicolas Niclausse
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program (see COPYING); if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.\n";
+  exit;
+}
