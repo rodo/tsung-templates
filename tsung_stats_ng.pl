@@ -36,7 +36,6 @@ use vars qw ($help @files $dygraph $verbose $debug $noplot $noextra $version $st
 use File::Spec::Functions qw(rel2abs);
 use File::Basename;
 use File::Copy;
-use File::Copy::Recursive;
 
 my $tagvsn = '1.5.0';
 
@@ -733,7 +732,7 @@ sub html_report {
     $tt->process("graph_dy.thtml", $vars, "graph.html") or die $tt->error(), "\n";
     copy (($template_dir . "/dygraph-combined.js"), ".") or die "copy failed : $!";
   }
-    File::Copy::Recursive::rcopy (($template_dir . "/static/"), "./static/") or die "copy failed : $!";
+    copy_recursively($template_dir . "/static", "./static") or die "copy failed : $!";
 }
 
 
@@ -856,6 +855,25 @@ sub formatsize {
     } else {
         sprintf "%.2f G$unit",$value/(1024*1024*1024);
     }
+}
+
+sub copy_recursively {
+  my ($from_dir, $to_dir) = @_;
+  opendir my($dh), $from_dir or die "Could not open dir '$from_dir': $!";
+  mkdir $to_dir or die "mkdir '$to_dir' failed: $!" unless -e $to_dir;
+  for my $entry (readdir $dh) {
+    next if ($entry =~ m/^\.\.?$/);
+    my $source = "$from_dir/$entry";
+    my $destination = "$to_dir/$entry";
+    if (-d $source) {
+      mkdir $destination or die "mkdir '$destination' failed: $!" unless -e $destination;
+      copy_recursively($source, $destination);
+    } else {
+      copy($source, $destination) or die "copy failed: $!";
+    }
+  }
+  closedir $dh;
+  return 1;
 }
 
 sub version {
