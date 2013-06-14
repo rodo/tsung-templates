@@ -32,12 +32,14 @@ use strict;
 use Getopt::Long;
 use vars qw ($help @files $dygraph $verbose $debug $noplot $noextra $version $stats
              $template_dir $nohtml $template_dir $gnuplot $logy $rotate_xtics
-             $imgfmt $oldgnuplot @percentile);
+             $imgfmt $oldgnuplot @percentile $datafiles);
 use File::Spec::Functions qw(rel2abs);
 use File::Basename;
 use File::Copy;
+use File::Spec;
+use Cwd;
 
-my $tagvsn = '1.5.0';
+my $tagvsn = '@PACKAGE_VERSION@';
 
 GetOptions( "help",\$help,
             "verbose",\$verbose,
@@ -90,37 +92,59 @@ unless ($template_dir) {
 $stats = "tsung.log" unless $stats;
 die "The stats file ($stats) does not exist, abort !" unless -e $stats;
 
+# keep the inode of stats directory
 my $sdir = (fileparse($stats, ".log"))[1];
 my $sinode = (stat($sdir))[1];
 
 # tsung-fullstats.log is in the same directory as tsung.log
 my $fullstats = join("",(fileparse($stats, ".log"))[1],"tsung-fullstats.log");
 
-my $updir = join("",(fileparse($stats, ".log"))[1],"../");
+my $updir = Cwd::realpath($sdir . "/../");
 
-opendir( DATA_DIR, $updir) || die "Cannot open $updir\n";
-my ($odirs);
-while (my $file = readdir(DATA_DIR) ) {
-  next if ($file =~ m/^\./);
-  my ($device, $inode, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $mtime, $ctime, $blksize, $blocks) = stat("../$file");
+opendir( UPDIR, $updir) || die "Cannot open $updir\n";
+my %odirs;
+while (my $file = readdir(UPDIR) ) {
+  next unless ($file =~ /^\d{8}/);
+  my ($device, $inode, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $mtime, $ctime, $blksize, $blocks) = stat(File::Spec->catfile($updir, $file));
   my $key = $file;
   $key =~ s/[-:]//g;
-  $odirs->{$key}->{"name"} = $file;
-  $odirs->{$key}->{"inode"} = $inode;
+  $odirs{$key}->{"name"} = $file;
+  $odirs{$key}->{"inode"} = $inode;
 }
-closedir(DATA_DIR);
+closedir(UPDIR);
 
 my $inode = "";
 
-my @ofiles = sort { $b <=> $a } (keys ($odirs));
+my @ofiles = sort { $b <=> $a } (keys (%odirs));
 my ($next, $prev, $flag) = (0, 0, 0);
 while ( my $file = shift @ofiles ) {
-  print $odirs->{$file}->{"name"}." $file $prev $next $flag\n" if $debug;
-  $prev = $odirs->{$file}->{"name"} if ($flag);
-  $flag = 1 if ($odirs->{$file}->{"inode"} eq $sinode);
-  $next = $odirs->{$file}->{"name"} unless ($flag);
+  print $odirs{$file}->{"name"}." $file $prev $next $flag\n" if $debug;
+  $prev = $odirs{$file}->{"name"} if ($flag);
+  $flag = 1 if ($odirs{$file}->{"inode"} eq $sinode);
+  $next = $odirs{$file}->{"name"} unless ($flag);
   last if ($flag && $prev) ;
 }
+
+# fill hash with data files
+my $data_dir = File::Spec->catfile($sdir, "data");
+opendir( DATA_DIR, $data_dir) || die "Cannot open $data_dir\n";
+while (my $file = readdir(DATA_DIR) ) {
+  next unless (-f "$data_dir/$file");
+  $datafiles->{tsung}->{$file} = "data/$file";
+}
+closedir(DATA_DIR);
+
+# fill hash with csv_data files
+$data_dir = File::Spec->catfile($sdir, "csv_data");
+opendir( DATA_DIR, $data_dir) || die "Cannot open $data_dir\n";
+while (my $file = readdir(DATA_DIR) ) {
+  next unless (-f "$data_dir/$file");
+  $datafiles->{csv}->{$file} = "csv_data/$file";
+}
+closedir(DATA_DIR);
+
+
+
 
 $imgfmt = "png" unless $imgfmt;
 my %imgfmt_list = ("png" => 1, "svg" => 1,  "pdf" => 1,  "ps" => 1); # hash of all the format we support to make search more efficient
@@ -152,10 +176,8 @@ foreach (@percentile) {
   die "Percentile must be > 0" if ($_ <= 0);
 }
 
-# import json only if percentile are used
 # test if fullstats file is present
 if (scalar(@percentile) > 0) {
-  use JSON;
   die "The stats file ($fullstats) does not exist, abort !" unless -e $fullstats;
 }
 
@@ -632,7 +654,7 @@ sub html_report {
     my (@standard_templates) = qw(header footer graph graph_dy);
     opendir (TDIR, $template_dir) or warn "can't open directory $template_dir";
     while (my $file = readdir (TDIR) ) {
-        if ($file =~ /(.*).thtml$/) {
+        if ($file =~ /(.*.thtml)$/ or $file =~ /(.*.tcsv)$/) {
 	  push(@all_templates, $1) unless ($1 ~~ @standard_templates);
         }
     }
@@ -664,10 +686,9 @@ sub html_report {
         }
       }
 
-    # compute percentiles
+    # compute percentiles if requested
     my $percentils;
     if (scalar(@percentile) > 0) {
-
       my $rdatas = &read_full($fullstats);
 
       foreach my $percentil (@percentile) {
@@ -696,12 +717,15 @@ sub html_report {
          conf        => $xml_conf,
 	 percentil   => $percentils,
 	 next        => $next,
-	 prev        => $prev
+	 prev        => $prev,
+         datafiles   => $datafiles
         };
 
     foreach my $template (@all_templates) {
-      $tt->process("$template.thtml", $vars, "$template.html") or die $tt->error(), "\n";
-      print "Generate $template.html\n" if $debug;
+      my ($fname, $ext) = (split('\.', $template));
+      $ext =~ s/^t(.*)/$1/;
+      $tt->process("$fname.t$ext", $vars, "$fname.$ext") or die $tt->error(), " when generating templates\n";
+      print "Generate $fname.$ext\n" if $debug;
     }
 
     $vars =
@@ -726,13 +750,15 @@ sub html_report {
 	 next        => $next,
 	 prev        => $prev
         };
-  if (not $dygraph) {
-    $tt->process("graph.thtml", $vars, "graph.html") or die $tt->error(), "\n";
-  } else {
-    $tt->process("graph_dy.thtml", $vars, "graph.html") or die $tt->error(), "\n";
-    copy (($template_dir . "/dygraph-combined.js"), ".") or die "copy failed : $!";
-  }
-    copy_recursively($template_dir . "/static", "./static") or die "copy failed : $!";
+    if (not $dygraph) {
+      $tt->process("graph.thtml", $vars, "graph.html") or die $tt->error(), "\n";
+    } else {
+      $tt->process("graph_dy.thtml", $vars, "graph.html") or die $tt->error(), "\n";
+      copy (($template_dir . "/dygraph-combined.js"), ".") or die "copy failed : $!";
+    }
+    if (-d $template_dir . "/static") {
+      copy_recursively($template_dir . "/static", "./static") or die "copy failed : $!";
+    }
 }
 
 
@@ -747,7 +773,7 @@ sub read_full {
 
   open (FILE,"<$file") or die "Can't open $file $!";
   while (<FILE>) {
-    if (/\[?{sample,([a-z_]*),\[?([0-9\.,]*)\]?}/) {
+    if (/\[?{sample,(\w*),\[?([0-9\.,]*)\]?}/) {
       #print STDOUT "$1 --  $2\n";
       foreach (split(",", $2)) {
 	$datas->{$1}->{$i} = $_;
@@ -760,10 +786,10 @@ sub read_full {
   return $datas;
 }
 
+
 sub pperc {
   my ($pctl, $data, $rdatas) = @_;
   my @allvalues;
-
   my ($mkey, $mvalue);
   my ($key, $value);
 
@@ -774,12 +800,12 @@ sub pperc {
       }
     }
   }
-
   return percentile($pctl, \@allvalues);
 }
 
 
 sub percentile {
+  # percentile computation
   my ($p,$aref) = @_;
   my $percentile = int($p * $#{$aref}/100);
   return (@$aref)[$percentile];

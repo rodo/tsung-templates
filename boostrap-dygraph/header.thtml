@@ -1,5 +1,4 @@
 <!--
-
 Templates : boostrap-dygraph
 Source : http://github.
 -->
@@ -62,8 +61,10 @@ Source : http://github.
             <ul class="nav">
               <li><a href="report.html">Statistics</a></li>
               <li><a href="graph.html">Graphics</a></li>
+              <li><a href="datas.html">Datas</a></li>
             </ul>
           </div><!--/.nav-collapse -->
+
         </div>
       </div>
     </div>
@@ -92,6 +93,7 @@ Source : http://github.
               <li class="nav-header">[% graph_subtitle %]</li>
               <li><a href="graph.html#response_time">Response times</a></li>
               <li><a href="graph.html#throughput">Throughput graphs</a></li>
+              <li><a href="graph.html#networktraff">Network traffic</a></li>
               <li><a href="graph.html#users">Simultaneous Users</a></li>
               [% IF os_mon %]
               <li><a href="graph.html#os_mon">Server monitoring</a></li>
