@@ -10,6 +10,7 @@ function graphOptions(title, div, ylabel) {
 	    title: '<p>'+title+'</p>',
 	    titleHeight: 6,
 	    ylabel: ylabel,
+	    labelsSeparateLines: true,
 	    labelsDiv: div,
 	    rollPeriod: 7,
 	    showRoller: true}

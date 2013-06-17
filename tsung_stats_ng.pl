@@ -770,22 +770,36 @@ sub read_full {
   my $datas;
   my $i = 0;
   #[{sample,tr_graph,1459.018798828125}]
-
+  my $flag = 0;
   open (FILE,"<$file") or die "Can't open $file $!";
   while (<FILE>) {
     if (/\[?{sample,(\w*),\[?([0-9\.,]*)\]?}/) {
+      $flag = 0;
       #print STDOUT "$1 --  $2\n";
       foreach (split(",", $2)) {
 	$datas->{$1}->{$i} = $_;
 	$i++;
       }
+    } else {
+      if (/{sample,(\w*),/) {
+	$flag = $1;
+      }
     }
+
+    if ($flag) {
+      if (/\s*\[?([0-9\.,]*)\]?}?/) {
+	foreach (split(',', $1)) {
+	  $datas->{$flag}->{$i} = $_;
+	  $i++;
+	}
+      }
+    }
+
   }
   close FILE;
 
   return $datas;
 }
-
 
 sub pperc {
   my ($pctl, $data, $rdatas) = @_;
@@ -803,11 +817,14 @@ sub pperc {
   return percentile($pctl, \@allvalues);
 }
 
-
 sub percentile {
   # percentile computation
-  my ($p,$aref) = @_;
-  my $percentile = int($p * $#{$aref}/100);
+  my ($p, $aref) = @_;
+
+  my @sorted = sort { $a <=> $b } (@$aref);
+  $aref = \@sorted;
+
+  my $percentile = int( $#{$aref} * $p / 100);
   return (@$aref)[$percentile];
 }
 
