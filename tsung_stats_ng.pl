@@ -125,27 +125,6 @@ while ( my $file = shift @ofiles ) {
   last if ($flag && $prev) ;
 }
 
-# fill hash with data files
-my $data_dir = File::Spec->catfile($sdir, "data");
-opendir( DATA_DIR, $data_dir) || die "Cannot open $data_dir\n";
-while (my $file = readdir(DATA_DIR) ) {
-  next unless (-f "$data_dir/$file");
-  $datafiles->{tsung}->{$file} = "data/$file";
-}
-closedir(DATA_DIR);
-
-# fill hash with csv_data files
-$data_dir = File::Spec->catfile($sdir, "csv_data");
-opendir( DATA_DIR, $data_dir) || die "Cannot open $data_dir\n";
-while (my $file = readdir(DATA_DIR) ) {
-  next unless (-f "$data_dir/$file");
-  $datafiles->{csv}->{$file} = "csv_data/$file";
-}
-closedir(DATA_DIR);
-
-
-
-
 $imgfmt = "png" unless $imgfmt;
 my %imgfmt_list = ("png" => 1, "svg" => 1,  "pdf" => 1,  "ps" => 1); # hash of all the format we support to make search more efficient
 die "Image format \"$imgfmt\" not supported" unless $imgfmt_list{"$imgfmt"};
@@ -186,6 +165,26 @@ my $oldgnuplot = is_oldgnuplot($gnuplot);
 $gnuplot .= " >> gnuplot.log 2>&1";
 
 &parse_stats_file($stats);
+
+# fill hash with data files
+my $data_dir = File::Spec->catfile($sdir, "data");
+opendir( DATA_DIR, $data_dir) || die "Cannot open $data_dir\n";
+while (my $file = readdir(DATA_DIR) ) {
+  next unless (-f "$data_dir/$file");
+  $datafiles->{tsung}->{$file} = "data/$file";
+}
+closedir(DATA_DIR);
+
+# fill hash with csv_data files
+$data_dir = File::Spec->catfile($sdir, "csv_data");
+opendir( DATA_DIR, $data_dir) || die "Cannot open $data_dir\n";
+while (my $file = readdir(DATA_DIR) ) {
+  next unless (-f "$data_dir/$file");
+  $datafiles->{csv}->{$file} = "csv_data/$file";
+}
+closedir(DATA_DIR);
+
+
 &html_report() unless $nohtml;
 
 # returns 1 (=true) if gnuplot doesn't support the "set terminal png size x,y" specifications
