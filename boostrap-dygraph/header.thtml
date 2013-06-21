@@ -61,6 +61,12 @@ Source : http://github.
             <ul class="nav">
               <li><a href="report.html">Statistics</a></li>
               <li><a href="graph.html">Graphics</a></li>
+	      [% IF os_mon %]
+              <li><a href="monitoring.html">Monitoring</a></li>
+	      [% END %]
+	      [% IF urlerrors %]
+              <li><a href="urlerrors.html">UrlErros</a></li>
+	      [% END %]     	 
               <li><a href="datas.html">Datas</a></li>
             </ul>
           </div><!--/.nav-collapse -->

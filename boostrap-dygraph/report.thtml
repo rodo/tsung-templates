@@ -97,7 +97,7 @@
 	    [% IF cat_data.$key == "gauge"  %]
 	    <tr>
 	      <td>$key</td>
-	      <td>[%  data.maxmean.$key %] </td>
+	      <td>[% data.maxmean.$key %] </td>
 	    </tr>
 	    [% END %]
 	    [% END %]
@@ -122,6 +122,28 @@
 	  </table>
 	</div>
     </div>
+
+
+    <div id="count" class="row-fluid">
+      <h3>Sessions</h3>
+	<div class="span4">
+	  <table class="table table-bordered table-hover">
+	    <tr>
+	      <th>Id</th>
+	      <th>Name</th>
+	      <th>Count</th> 
+	    </tr>
+	    [% FOREACH key = sessions.keys.sort %]
+	    <tr>
+	      <td>$key</td>
+	      <td>[% sessions.$key.name %] </td>
+	      <td>[% sessions.$key.count %] </td>
+	    </tr>
+	    [% END %]
+	  </table>
+	</div>
+    </div>
+
 
     [% IF errors %]
     <div id="errors">

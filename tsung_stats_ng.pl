@@ -32,14 +32,15 @@ use strict;
 use Getopt::Long;
 use vars qw ($help @files $dygraph $verbose $debug $noplot $noextra $version $stats
              $template_dir $nohtml $template_dir $gnuplot $logy $rotate_xtics
-             $imgfmt $oldgnuplot @percentile $datafiles);
+             $imgfmt $oldgnuplot @percentile $datafiles $controller_log);
 use File::Spec::Functions qw(rel2abs);
 use File::Basename;
 use File::Copy;
 use File::Spec;
+use Digest::MD5 qw(md5_hex);
 use Cwd;
 
-my $tagvsn = '@PACKAGE_VERSION@';
+my $tagvsn = '1.5.0';
 
 GetOptions( "help",\$help,
             "verbose",\$verbose,
@@ -96,8 +97,18 @@ die "The stats file ($stats) does not exist, abort !" unless -e $stats;
 my $sdir = (fileparse($stats, ".log"))[1];
 my $sinode = (stat($sdir))[1];
 
+# get the tsung controller log file name
+opendir( SDIR, $sdir);
+while (readdir(SDIR) ) {
+  next unless ($_ =~ /^tsung_controller/);
+  $controller_log = $_;
+}
+close(SDIR);
+
 # tsung-fullstats.log is in the same directory as tsung.log
 my $fullstats = join("",(fileparse($stats, ".log"))[1],"tsung-fullstats.log");
+# tsung.dump is in the same directory as tsung.log
+my $tsung_dump = join("",(fileparse($stats, ".log"))[1],"tsung.dump");
 
 my $updir = Cwd::realpath($sdir . "/../");
 
@@ -699,6 +710,8 @@ sub html_report {
 	$percentils->{title}->{$pp} = "PCTL".$percentil;
       }
     }
+    my %sessions = &read_controller($controller_log);
+    my %url_errors = &read_dump($tsung_dump);
 
     my $vars =
       {
@@ -717,6 +730,8 @@ sub html_report {
 	 percentil   => $percentils,
 	 next        => $next,
 	 prev        => $prev,
+         sessions    => \%sessions,
+         urlerrors   => \%url_errors,
          datafiles   => $datafiles
         };
 
@@ -827,6 +842,49 @@ sub percentile {
   return (@$aref)[$percentile];
 }
 
+sub read_controller {
+  my ($file) = @_;
+
+  open FILE, "$file" or die "Cannot open $file : ".$!;
+  my $time = "";
+  my (%sessions);
+  while (<FILE>) {
+    if (/Session name for id (\d+) is \"(.*)\"$/) {
+      $sessions{$1}->{name} = $2;
+      $sessions{$1}->{count} = 0;
+    }
+
+    $time = $1 if (/^=INFO REPORT==== (.*) ===$/);
+    if (/Session (\d+) choosen/) {
+      $sessions{$1}->{count}++;
+    }
+  }
+  close FILE;
+
+  return %sessions;
+}
+
+# Read the tsung.dump file to extract url in errors
+# tsung must be run with dumptraffic="protocol"
+#
+sub read_dump {
+  my ($filename) = @_;
+  open FILE, $filename or die "Cannot open $filename : ".$!;
+
+  my (%err_urls);
+  while (<FILE>) {
+    s/&amp;/&/g;
+    if (/^\d+\.\d+;(.*);get;(.*);(.*);(\d{3});\d+;.*;(.*);;$/) {
+      if ($4 >= 400) {
+	my $digest = md5_hex($3);
+	$err_urls{$4}->{$digest}->{'url'} = $3;
+	$err_urls{$4}->{$digest}->{'transaction'} = $5;
+      }
+    }
+  }
+  close FILE;
+  return %err_urls;
+}
 
 sub usage {
     print "this script is part of tsung version $tagvsn,

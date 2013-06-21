@@ -1,0 +1,32 @@
+[% INCLUDE header.thtml %]
+
+[% USE format %]
+[% USE pf = format('%.5f') %]
+
+<div class="span10">
+  
+  <div id="maincontent">
+        
+    <div id="urlerrors[% code %]">
+      [% FOREACH code = urlerrors.keys.sort %]
+      <h3>Error [% code %]</h3>
+      <table class="table table-striped">
+	<tr>
+	  <th class="span4">Transaction</th>
+	  <th>Url</th>
+	</tr>
+	[% FOREACH key = urlerrors.$code.keys.sort %]
+	<tr>
+	  <td>[% USE String(urlerrors.$code.$key.transaction) %][% String.remove('tr_') %]</td>
+	  <td>[% urlerrors.$code.$key.url %]</td>
+	</tr>
+	[% END %]
+      </table>
+	[% END %]
+    </div>
+
+  </div>
+
+</div><!-- span9 -->
+
+[% INCLUDE footer.thtml %]

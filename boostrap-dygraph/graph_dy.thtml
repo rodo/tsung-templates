@@ -8,7 +8,7 @@
     </div>
     <div class="span2">
       <div>
-      [% FOREACH key = data.keys %]
+      [% FOREACH key = data.keys.sort %]
       <label class="checkbox" for="[% 99 + data.$key %]">
 	<input type="checkbox" id="[% 99 + data.$key %]" onClick="stockchange(gtrans, this, 100)" checked>
 	$key
@@ -47,7 +47,7 @@
     </div>
     <div class="span2">
       <div class="well">
-      [% FOREACH key = data.keys %]
+      [% FOREACH key = data.keys.sort %]
       <label class="checkbox" for="[% 99 + data.$key %]">
 	<input type="checkbox" id="[% 99 + data.$key %]" onClick="stockchange(gtransrate, this, 100)" checked>
 	$key
@@ -122,12 +122,18 @@
   
   [% IF os_mon %]
   <div id="os_mon" class="row">
-    <div class="span10">
-      <h4>Server OS monitoring</h4>
-      
-      <div id="cpu_mean" style="width:500px; height:300px;"></div>
-      <div id="freemem_mean" style="width:500px; height:300px;"></div>
-      <div id="load_mean" style="width:500px; height:300px;"></div>
+    <h4>Server OS monitoring</h4>
+    <div class="span3">
+      <h5>CPU mean</h5>
+      <div id="cpu_mean" style="width:240px; height:160px;"></div>
+    </div>
+    <div class="span3">
+      <h5>Freemem mean</h5>
+      <div id="freemem_mean" style="width:240px; height:160px;"></div>      
+    </div>
+    <div class="span3">
+      <h5>Load mean</h5>
+      <div id="load_mean" style="width:240px; height:160px;"></div>
     </div>
   </div>
   [% END %]
@@ -136,7 +142,7 @@
   <div id="http_status" class="row">
     <div class="span10">
       <h4>HTTP return code Status (rate)</h4>
-      <div id="http_code_rate" style="width:500px; height:300px;"></div>
+      <div id="http_code_rate" style="width:750px; height:300px;"></div>
     </div>
   </div>
   [% END %]

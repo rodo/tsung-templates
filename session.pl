@@ -12,11 +12,16 @@
 #=INFO REPORT==== 19-Jun-2013::17:22:10 ===
 #  ts_config:(5:<0.51.0>) Session name for id 1 is "one"
 use strict;
+use File::Basename;
 
+opendir( UPDIR, ".") || die "Cannot open .\n";
+my $file = '';
+while (readdir(UPDIR) ) {
+    next unless ($_ =~ /^tsung_controller/);
+    $file = $_;
+}
 
-my $file = 'tsung_controller@elz.log';
-
-open FILE, "$file" or die $!;
+open FILE, "$file" or die "Cannot open $file : ".$!;
 my $time = "";
 my (%sessions);
 while (<FILE>) {
