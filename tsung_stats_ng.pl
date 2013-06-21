@@ -99,9 +99,9 @@ my $sinode = (stat($sdir))[1];
 
 # get the tsung controller log file name
 opendir( SDIR, $sdir);
-while (readdir(SDIR) ) {
-  next unless ($_ =~ /^tsung_controller/);
-  $controller_log = $_;
+while (my $file = readdir(SDIR) ) {
+  next unless ($file =~ /^tsung_controller/);
+  $controller_log = $file;
 }
 close(SDIR);
 
