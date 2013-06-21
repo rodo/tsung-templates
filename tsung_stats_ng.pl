@@ -878,6 +878,8 @@ sub read_dump {
       if ($4 >= 400) {
 	my $digest = md5_hex($3);
 	$err_urls{$4}->{$digest}->{'url'} = $3;
+	$err_urls{$4}->{$digest}->{'number'} = 0 unless(defined($err_urls{$4}->{$digest}->{'number'}));
+	$err_urls{$4}->{$digest}->{'number'} = $err_urls{$4}->{$digest}->{'number'} + 1;
 	$err_urls{$4}->{$digest}->{'transaction'} = $5;
       }
     }
