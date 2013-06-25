@@ -2,7 +2,7 @@
 
 <div class="span10">
   <div id="count" class="row-fluid" >
-    <h4>Response Time</h4>
+    <h4>Transaction duration time</h4>
     <div class="span8">
       <div id="tr_mean" style="width:590px; height:300px;"></div>
     </div>
@@ -20,7 +20,7 @@
   </div>
 
   <div class="row">
-    <h4>Requests and connection establishment</h4>
+    <h4>Requests and connection establishment response time</h4>
     <div class="span8">
       <div id="perfs_mean" style="width:590px; height:300px;"></div>
     </div>
@@ -122,18 +122,28 @@
   
   [% IF os_mon %]
   <div id="os_mon" class="row">
-    <h4>Server OS monitoring</h4>
-    <div class="span3">
+    <div class="span8">      
+      <h4>Server OS monitoring</h4>
+    </div>
+  </div>
+  <div class="row">
+    <div class="span5">
       <h5>CPU mean</h5>
-      <div id="cpu_mean" style="width:240px; height:160px;"></div>
+      <div id="cpu_mean" style="width:420px; height:190px;"></div>
     </div>
-    <div class="span3">
+    <div class="span5">
       <h5>Freemem mean</h5>
-      <div id="freemem_mean" style="width:240px; height:160px;"></div>      
+      <div id="freemem_mean" style="width:420px; height:190px;"></div>      
     </div>
-    <div class="span3">
+  </div>
+  <div class="row">
+    <div class="span5">
       <h5>Load mean</h5>
-      <div id="load_mean" style="width:240px; height:160px;"></div>
+      <div id="load_mean" style="width:420px; height:190px;"></div>
+    </div>
+    <div class="span5">
+      <h5>IO mean</h5>
+      <div id="io_mean" style="width:420px; height:190px;"></div>
     </div>
   </div>
   [% END %]
@@ -142,7 +152,13 @@
   <div id="http_status" class="row">
     <div class="span10">
       <h4>HTTP return code Status (rate)</h4>
-      <div id="http_code_rate" style="width:750px; height:300px;"></div>
+      <div id="http_code_rate" style="width:900px; height:300px;"></div>
+    </div>
+  </div>
+  <div id="http_status" class="row">
+    <div class="span10">
+      <h4>HTTP return code Status (rate)</h4>
+      <div id="http_code_rate_ko" style="width:900px; height:300px;"></div>
     </div>
   </div>
   [% END %]
@@ -151,7 +167,7 @@
   <div id="errors" class="row">
     <div class="span10">
       <h4>Errors (rate)</h4>
-      <div id="errors_rate" style="width:500px; height:300px;"></div>
+      <div id="errors_rate" style="width:900px; height:300px;"></div>
     </div>
   </div>
   [% END %]
