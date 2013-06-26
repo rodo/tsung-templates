@@ -3,28 +3,29 @@
  *
  */
 
-function graphOptions(title, div, ylabel) {
+function graphOptions(title, div, ylabel, sselc) {
+
+    sselc = (typeof sselc === "undefined") ? false : sselc;
+
     if (div != null) {
 	options = {
-	    legend: 'always',
 	    title: '<p>'+title+'</p>',
 	    titleHeight: 6,
 	    ylabel: ylabel,
 	    labelsSeparateLines: true,
 	    labelsDiv: div,
 	    rollPeriod: 7,
-	    xlabel: "toto",
 	    showRoller: false,
+	    showRangeSelector: sselc,
 	    includeZero: true}
     } else {
 	options = {
-	    legend: 'always',
 	    title: '<p>'+title+'</p>',
 	    titleHeight: 6,
 	    ylabel: ylabel,
-	    xlabel: "toto",
 	    rollPeriod: 7,
 	    showRoller: false,
+	    showRangeSelector: sselc,
 	    includeZero: true}
     }
     return options;
@@ -34,23 +35,31 @@ function stockchange(chart, el, step) {
     chart.setVisibility(el.id - step, el.checked);
 };
 
+function transchange(chart, el, step) {
+    gtrans.setVisibility(el.id - step, el.checked);
+    gtransrate.setVisibility(el.id - step, el.checked);
+};
+
 gtrans = new Dygraph(document.getElementById("tr_mean"),
 		     "csv_data/graphes-Transactions-mean.csv",
-		     graphOptions("Transactions","tr_mean_val","msec")
+		     graphOptions("Transactions duration","tr_mean_val","msec", true)
 		    );
-
-gperf = new Dygraph(document.getElementById("perfs_mean"),
-		    "csv_data/graphes-Perfs-mean.csv",
-		    graphOptions("","tr_perfs_val","msec") );
 
 gtransrate = new Dygraph(document.getElementById("transrate"),
 			 "csv_data/graphes-Transactions-rate.csv",
-			 graphOptions("",null,"")
+			 graphOptions("Transactions rate",null,"transactions/sec", false)
 			);
+
+gperf = new Dygraph(document.getElementById("perfs_mean"),
+		    "csv_data/graphes-Perfs-mean.csv",
+		    graphOptions("","tr_perfs_val","msec", false) 
+		   );
+
+
 
 greqrate = new Dygraph(document.getElementById("reqrate"),
 		       "csv_data/graphes-Perfs-rate.csv",
-		       graphOptions("requests","reqrate_val","requ/sec")
+		       graphOptions("requests","reqrate_val","requ/sec", true)
 		      );
 
 
@@ -66,7 +75,7 @@ garrivalrate = new Dygraph(document.getElementById("arrivalrate"),
 /* Network */
 gnet = new Dygraph(document.getElementById("size_rate"),
 		   "csv_data/graphes-Size-rate.csv",
-		   graphOptions("", null, "users")
+		   graphOptions("", null, "kBytes", true)
 		  );
 
 

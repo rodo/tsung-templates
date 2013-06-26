@@ -4,5 +4,5 @@
  */
 gmatch = new Dygraph(document.getElementById("chart_match_rate"),
 		     "csv_data/graphes-Match-rate.csv",
-		     graphOptions("", null, "/sec")
+		     graphOptions("", null, "/sec", true)
 		    );

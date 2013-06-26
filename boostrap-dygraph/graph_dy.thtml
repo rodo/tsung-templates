@@ -2,20 +2,22 @@
 
 <div class="span10">
   <div id="count" class="row-fluid" >
-    <h4>Transaction duration time</h4>
+    <h4>Transactions</h4>
     <div class="span8">
-      <div id="tr_mean" style="width:590px; height:300px;"></div>
+      <div id="tr_mean" style="width:590px; height:360px;"></div>
+      <div id="transrate" style="width:590px; height:300px;"></div>
     </div>
     <div class="span2">
       <div>
       [% FOREACH key = data.keys.sort %]
       <label class="checkbox" for="[% 99 + data.$key %]">
-	<input type="checkbox" id="[% 99 + data.$key %]" onClick="stockchange(gtrans, this, 100)" checked>
+	<input type="checkbox" id="[% 99 + data.$key %]" onClick="transchange(gtrans, this, 100)" checked>
 	$key
       </label>
       [% END %]
       </div>
-      <div id="tr_mean_val" style="width:390px; min-height:15px;">-</div>
+      <div id="tr_mean_val" style="width:390px; min-height:15px;"></div>
+      <div id="transrate_val" style="width:390px; min-height:15px;"></div>
     </div>
   </div>
 
@@ -37,25 +39,6 @@
       </div>
 
       <div id="tr_perfs_val" style="width:390px; min-height:15px;">-</div>
-    </div>
-  </div>
-
-  <div id="throughput" class="row">
-    <h4>Throughput</h4>
-    <div class="span8">
-      <div id="transrate" style="width:590px; height:300px;"></div>
-    </div>
-    <div class="span2">
-      <div class="well">
-      [% FOREACH key = data.keys.sort %]
-      <label class="checkbox" for="[% 99 + data.$key %]">
-	<input type="checkbox" id="[% 99 + data.$key %]" onClick="stockchange(gtransrate, this, 100)" checked>
-	$key
-      </label>
-      [% END %]
-      </div>
-
-      <div id="transrate_val" style="width:390px; min-height:15px;">-</div>
     </div>
   </div>
 
