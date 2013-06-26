@@ -13,15 +13,19 @@ function graphOptions(title, div, ylabel) {
 	    labelsSeparateLines: true,
 	    labelsDiv: div,
 	    rollPeriod: 7,
-	    showRoller: true}
+	    xlabel: "toto",
+	    showRoller: false,
+	    includeZero: true}
     } else {
 	options = {
 	    legend: 'always',
 	    title: '<p>'+title+'</p>',
 	    titleHeight: 6,
 	    ylabel: ylabel,
+	    xlabel: "toto",
 	    rollPeriod: 7,
-	    showRoller: true}
+	    showRoller: false,
+	    includeZero: true}
     }
     return options;
 };
@@ -59,16 +63,10 @@ garrivalrate = new Dygraph(document.getElementById("arrivalrate"),
 			   "csv_data/graphes-Users_Arrival-rate.csv",
 			   graphOptions("", null, "users")
 			  );
-
+/* Network */
 gnet = new Dygraph(document.getElementById("size_rate"),
 		   "csv_data/graphes-Size-rate.csv",
-		   {
-		       legend: "always",
-		       title: "<p>title</p>",
-		       ylabel: "ylabel",
-		       rollPeriod: 7,
-		       showRoller: true
-		   }
+		   graphOptions("", null, "users")
 		  );
 
 

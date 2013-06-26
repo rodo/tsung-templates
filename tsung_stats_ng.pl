@@ -525,6 +525,8 @@ sub parse_stats_file {
     my @tps;
     my @bosh_tps;
     my @code;
+    my @errcode;
+    my @okcode;
     my %extra_info = ();
     my @session;
     my @connect;
@@ -587,6 +589,8 @@ sub parse_stats_file {
         } elsif ($key =~ /^\d+$/) {
             $http = 1;
             push @code, "$key.txt";
+            push @errcode, "$key.txt" unless ($key eq "200");
+            push @okcode, "$key.txt" if ($key eq "200");
         } elsif ($key =~ /^(\S+)?:(\S+?@\S+)$/) {	  
             my $key_short_name = $1;
             push(@{$extra_info{$key_short_name}}, "$key.txt");
@@ -613,6 +617,10 @@ sub parse_stats_file {
   } else {
     plot_stats_dygraph(\@col,"Session",undef,\@session,["sessions/sec"],$logy) unless $noplot;
     plot_stats_dygraph(\@colcount,"HTTP_CODE",undef,\@code,["number/sec","total"],$logy) if not $noplot and @code;
+
+    plot_stats_dygraph(\@colcount,"HTTP_CODE_OK",undef,\@okcode,["number/sec","total"],$logy) if not $noplot;
+    plot_stats_dygraph(\@colcount,"HTTP_CODE_KO",undef,\@errcode,["number/sec","total"],$logy) if not $noplot and @errcode;
+
     plot_stats_dygraph(\@colcount,"Bosh",undef,\@bosh_tps,["rate"],$logy) if not $noplot and @bosh_tps;
     plot_stats_dygraph(\@col,"Perfs",undef,\@tps,["rate","msec"],$logy) unless $noplot;
     plot_stats_dygraph(\@col,"Transactions",undef,\@transactions,["transactions/sec","msec"],$logy) unless $noplot;
