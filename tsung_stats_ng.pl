@@ -475,7 +475,7 @@ sub parse_stats_file {
                 $category->{$type} = "http_status";
             } elsif ($type eq "request" or $type eq "page" or $type eq "session" or  $type eq "connect" or $type eq "async_rcv") {
                 $category->{$type} = "stats";
-            } elsif ($type =~ /^tr_/ or $type eq "page") {
+            } elsif ($type =~ /^tr_/) { # or $type eq "page") {
                 $category->{$type} = "transaction";
             } elsif ($type =~ "^size") {
                 $category->{$type} = "network";
@@ -525,6 +525,7 @@ sub parse_stats_file {
     my @tps;
     my @bosh_tps;
     my @code;
+    my @page;
     my @errcode;
     my @okcode;
     my %extra_info = ();
@@ -584,8 +585,10 @@ sub parse_stats_file {
         } elsif ($key eq "bosh_http_conn" or $key eq "bosh_http_req") {
 	    $bosh = 1;
             push @bosh_tps, "$key.txt";
-        } elsif ($key =~ /^tr_/ or $key eq "page") {
+        } elsif ($key =~ /^tr_/) {
             push @transactions, "$key.txt";
+        } elsif ($key eq "page") {
+            push @page, "$key.txt";
         } elsif ($key =~ /^\d+$/) {
             $http = 1;
             push @code, "$key.txt";
@@ -624,6 +627,7 @@ sub parse_stats_file {
     plot_stats_dygraph(\@colcount,"Bosh",undef,\@bosh_tps,["rate"],$logy) if not $noplot and @bosh_tps;
     plot_stats_dygraph(\@col,"Perfs",undef,\@tps,["rate","msec"],$logy) unless $noplot;
     plot_stats_dygraph(\@col,"Transactions",undef,\@transactions,["transactions/sec","msec"],$logy) unless $noplot;
+    plot_stats_dygraph(\@col,"Pages" ,undef,\@page,["pages/sec","msec"],$logy) unless $noplot;
     plot_stats_dygraph(\@colcount,"Match",undef,\@match,["rate","rate"],$logy) unless $noplot;
     plot_stats_dygraph(\@colcount,"Event",undef,\@time,["rate","msec"],$logy) unless $noplot;
     plot_stats_dygraph(\@colasync,"Async",undef,\@async,["rate","rate"],$logy) unless $noplot;
@@ -689,7 +693,7 @@ sub html_report {
 	      }
             next if not ($data eq "session" or $data eq "connect" or $data eq "request" or $data eq "page" or $data =~ m/^tr_/);
             $maxval->{$type}->{$data} = &formattime($maxval->{$type}->{$data});
-	    if ($data =~ m/^tr_/ or $data eq "page") {
+	    if ($data =~ m/^tr_/) { # or $data eq "page") {
 	      unless ($datatrans->{$data}) {
 		$datatrans->{$data} = $inctrans;
 		$inctrans++;

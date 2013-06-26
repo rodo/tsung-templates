@@ -1,0 +1,20 @@
+[% INCLUDE header.thtml %]
+
+<div class="span10">
+  <div id="count" class="row-fluid" >
+    <h4>Sessions duration</h4>
+    <div class="span10">
+      <div id="chart_session" style="width:900px; height:360px;"></div>
+      <div id="chart_session_max" style="width:900px; height:300px;"></div>
+      <div id="chart_session_min" style="width:900px; height:300px;"></div>
+      <div id="chart_session_stddev" style="width:900px; height:300px;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="static/js/tsung.graph.common.js" ></script>
+<script src="static/js/tsung.graph.session.js" ></script>
+
+[% INCLUDE footer.thtml %]
+
+

@@ -110,6 +110,7 @@ Source : http://github.
               [% IF errors %]
               <li><a href="graph.html#errors">Errors</a></li>
               [% END %]
+              <li><a href="graph_session.html">Sessions</a></li>
 
               [% IF conf %]
               <li class="nav-header">Data files</li>

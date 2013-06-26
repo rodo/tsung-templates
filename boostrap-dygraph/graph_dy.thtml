@@ -157,7 +157,7 @@
   
 </div>
 
-
+<script src="static/js/tsung.graph.common.js" ></script>
 <script src="static/js/tsung.graph.js" ></script>
 [% IF match %]
 <script src="static/js/tsung.graph.match.js" ></script>
