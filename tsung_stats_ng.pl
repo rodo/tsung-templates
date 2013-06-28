@@ -752,6 +752,7 @@ sub html_report {
     foreach my $template (@all_templates) {
       my ($fname, $ext) = (split('\.', $template));
       $ext =~ s/^t(.*)/$1/;
+      $vars->{pagename} = "$fname.$ext";
       $tt->process("$fname.t$ext", $vars, "$fname.$ext") or die $tt->error(), " when generating templates\n";
       print "Generate $fname.$ext\n" if $debug;
     }
@@ -776,7 +777,8 @@ sub html_report {
          data        => $datatrans,
          datamon     => $datamon,
 	 next        => $next,
-	 prev        => $prev
+	 prev        => $prev,
+         pagename    => "graph.html"
         };
     if (not $dygraph) {
       $tt->process("graph.thtml", $vars, "graph.html") or die $tt->error(), "\n";
