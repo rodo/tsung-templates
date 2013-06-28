@@ -101,17 +101,12 @@ Source : http://github.
               <li><a href="graph.html#throughput">Throughput graphs</a></li>
               <li><a href="graph.html#networktraff">Network traffic</a></li>
               <li><a href="graph.html#users">Simultaneous Users</a></li>
-              [% IF os_mon %]
               <li><a href="graph.html#os_mon">Server monitoring</a></li>
-              [% END %]
-              [% IF http %]
               <li><a href="graph.html#http_status">HTTP status</a></li>
-              [% END %]
               [% IF errors %]
               <li><a href="graph.html#errors">Errors</a></li>
               [% END %]
               <li><a href="graph_session.html">Sessions</a></li>
-
               [% IF conf %]
               <li class="nav-header">Data files</li>
 	      <li><a href="[% conf %]">XML Config file</a></li>

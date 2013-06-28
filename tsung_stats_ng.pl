@@ -592,8 +592,8 @@ sub parse_stats_file {
         } elsif ($key =~ /^\d+$/) {
             $http = 1;
             push @code, "$key.txt";
-            push @errcode, "$key.txt" unless ($key eq "200");
-            push @okcode, "$key.txt" if ($key eq "200");
+            push @errcode, "$key.txt" if ($key > "399");
+            push @okcode, "$key.txt" if ($key < "400");
         } elsif ($key =~ /^(\S+)?:(\S+?@\S+)$/) {	  
             my $key_short_name = $1;
             push(@{$extra_info{$key_short_name}}, "$key.txt");
@@ -881,6 +881,8 @@ sub read_controller {
 # Read the tsung.dump file to extract url in errors
 # tsung must be run with dumptraffic="protocol"
 #
+# 1371836668.714291;<7278.72.0>;3;get;127.0.0.1;/?loop=7;200;1354;1.258;tr_repeat;;
+# 1371836668.716078;<7278.72.0>;3;get;127.0.0.1;/?loop=8;200;1354;1.272;tr_repeat;;
 sub read_dump {
   my ($filename) = @_;
   open FILE, $filename or die "Cannot open $filename : ".$!;
