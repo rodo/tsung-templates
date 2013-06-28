@@ -1,0 +1,45 @@
+[% INCLUDE header.thtml %]
+
+[% USE format %]
+[% USE pf = format('%.2f') %]
+
+<div class="span10">
+  
+  <div id="maincontent">
+        
+    <div>
+      [% FOREACH transaction = transerrors.keys.sort %]
+      <a href="urlerrors.csv">[% USE String(transaction) %][% String.remove('tr_') %]</a>
+      <table class="table table-striped">
+	<tr>
+	  <th class="span4">code</th>
+	  <th class="span2">Nb</th>
+	  <th class="span2">Percent</th>
+	  <th class="span2">Files</th>
+	  <th class="span2">JS</th>
+	  <th class="span2">Images</th>
+	</tr>
+	[% FOREACH code = transerrors.$transaction.values.keys.sort %]
+	<tr>
+	  <td>[% code %]</td>
+	  <td>[% transerrors.$transaction.values.$code %]</td>
+	  <td>[% pf(transerrors.$transaction.percent.$code) %] %</td>
+	  <td>[% transerrors.$transaction.other.$code %]</td>
+	  <td>[% transerrors.$transaction.js.$code %]</td>
+	  <td>[% transerrors.$transaction.image.$code %]</td>
+	</tr>
+	[% END %]
+	<tr>
+	  <td>total</td>
+	  <td>[% transerrors.$transaction.total %]</td>
+	  <td></td>
+	</tr>
+      </table>
+	[% END %]
+    </div>
+
+  </div>
+
+</div><!-- span9 -->
+
+[% INCLUDE footer.thtml %]

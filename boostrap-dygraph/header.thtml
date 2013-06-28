@@ -92,6 +92,7 @@ Source : http://github.
               [% IF http %]
               <li><a href="report.html#http_status">HTTP status</a></li>
               [% END %]
+              <li><a href="transaction_errors.html">Transactions errors</a></li>
               [% IF errors %]
               <li><a href="report.html#errors">Errors</a></li>
               [% END %]
