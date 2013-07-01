@@ -938,7 +938,7 @@ sub read_dump {
 	    $err_urls{transcode}->{$trname}->{image_prct}->{$lcode} = 0;
 	  }
 	}
-      } elsif ($url =~ /\.js$/ || $url =~ /\.css$/) {
+      } elsif ($url =~ /\.js$/ || $url =~ /\.min\.map$/ || $url =~ /\.css$/) {
 	$err_urls{transcode}->{$trname}->{js}->{$code} = $err_urls{transcode}->{$trname}->{js}->{$code} + 1;
 	$err_urls{transcode}->{$trname}->{js_total} = $err_urls{transcode}->{$trname}->{js_total} + 1;
 
