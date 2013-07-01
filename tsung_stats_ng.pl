@@ -913,7 +913,7 @@ sub read_dump {
   my (%err_urls);
   while (<FILE>) {
     s/&amp;/&/g;
-    if (/^\d+\.\d+;(.*);get;(.*);(.*);(\d{3});\d+;.*;(.*);;$/) {
+    if (/^\d+\.\d+;(.*);get;(.*);(.*);(\d{3});\d+;.*;(.*);\w*;$/) {
       my ($host, $url, $code, $trname) = ($2, $3, $4, $5);
       $codes{$4} = $4;
       $err_urls{transcode}->{$5}->{total} = 0 unless (defined($err_urls{transcode}->{$5}->{total}));
