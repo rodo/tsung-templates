@@ -761,11 +761,11 @@ sub html_report {
       print "Generate $fname.$ext\n" if $debug;
     }
 
-    foreach my $trt (keys($trans_errors)) {
+    foreach my $trt (keys(%$trans_errors)) {
       my $urls = {};
 
-      foreach my $code (keys($url_errors)) {
-	foreach my $digest (keys($url_errors->{$code})) {
+      foreach my $code (keys(%$url_errors)) {
+	foreach my $digest (keys(%{$url_errors->{$code}})) {
 	  if ($url_errors->{$code}->{$digest}->{transaction} eq $trt ) {
 	    $urls->{$code}->{$digest} = $url_errors->{$code}->{$digest};
 	  }
