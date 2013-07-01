@@ -16,7 +16,7 @@
 	  <th class="span2">Nb</th>
 	  <th class="span2">Percent</th>
 	  <th class="span2">Files</th>
-	  <th class="span2">JS</th>
+	  <th class="span2">JS/CSS</th>
 	  <th class="span2">Images</th>
 	</tr>
 	[% FOREACH code = transerrors.$transaction.values.keys.sort %]
