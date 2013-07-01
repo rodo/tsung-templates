@@ -64,9 +64,7 @@ Source : http://github.
 	      [% IF os_mon %]
               <li><a href="monitoring.html">Monitoring</a></li>
 	      [% END %]
-	      [% IF urlerrors %]
               <li><a href="urlerrors.html">UrlErros</a></li>
-	      [% END %]     	 
               <li><a href="datas.html">Datas</a></li>
             </ul>
           </div><!--/.nav-collapse -->
