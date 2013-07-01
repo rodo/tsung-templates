@@ -762,12 +762,10 @@ sub html_report {
     }
 
     foreach my $trt (keys($trans_errors)) {
-      print "$trt\n";
       my $urls = {};
 
       foreach my $code (keys($url_errors)) {
 	foreach my $digest (keys($url_errors->{$code})) {
-	  print $url_errors->{$code}->{$digest}->{'transaction'}."\n";
 	  if ($url_errors->{$code}->{$digest}->{transaction} eq $trt ) {
 	    $urls->{$code}->{$digest} = $url_errors->{$code}->{$digest};
 	  }
@@ -777,12 +775,8 @@ sub html_report {
       $vars->{pagename} = "urls.html";
       $vars->{urlerrors} = $urls;
       $tt->process("urls.thtml", $vars, "urls_$trt.html") or die $tt->error(), " when generating templates\n";
-
+      print "Generate urls_$trt.html\n" if $debug;
     }
-    exit 1;
-
-
-
 
     $vars =
       {
