@@ -675,7 +675,7 @@ sub html_report {
 
     # lookup for templates files in templates_dir
     my (@all_templates);
-    my (@standard_templates) = qw(header footer graph graph_dy);
+    my (@standard_templates) = qw(header footer graph graph_dy urls);
     opendir (TDIR, $template_dir) or warn "can't open directory $template_dir";
     while (my $file = readdir (TDIR) ) {
         if ($file =~ /(.*.thtml)$/ or $file =~ /(.*.tcsv)$/) {
@@ -760,6 +760,29 @@ sub html_report {
       $tt->process("$fname.t$ext", $vars, "$fname.$ext") or die $tt->error(), " when generating templates\n";
       print "Generate $fname.$ext\n" if $debug;
     }
+
+    foreach my $trt (keys($trans_errors)) {
+      print "$trt\n";
+      my $urls = {};
+
+      foreach my $code (keys($url_errors)) {
+	foreach my $digest (keys($url_errors->{$code})) {
+	  print $url_errors->{$code}->{$digest}->{'transaction'}."\n";
+	  if ($url_errors->{$code}->{$digest}->{transaction} eq $trt ) {
+	    $urls->{$code}->{$digest} = $url_errors->{$code}->{$digest};
+	  }
+	}
+      }
+
+      $vars->{pagename} = "urls.html";
+      $vars->{urlerrors} = $urls;
+      $tt->process("urls.thtml", $vars, "urls_$trt.html") or die $tt->error(), " when generating templates\n";
+
+    }
+    exit 1;
+
+
+
 
     $vars =
       {

@@ -9,7 +9,7 @@
         
     <div>
       [% FOREACH transaction = transerrors.keys.sort %]
-      <h3>[% USE String(transaction) %][% String.remove('tr_') %]</h3>
+      <h3><a href="urls_[% transaction %].html">[% USE String(transaction) %][% String.remove('tr_') %]</a></h3>
       <table class="table table-striped">
 	<tr>
 	  <th class="span4">code</th>
