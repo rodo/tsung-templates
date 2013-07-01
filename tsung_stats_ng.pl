@@ -927,7 +927,7 @@ sub read_dump {
       $err_urls{transcode}->{$5}->{values}->{$4} = $err_urls{transcode}->{$5}->{values}->{$4} + 1;
       $err_urls{transcode}->{$5}->{total} = $err_urls{transcode}->{$5}->{total} + 1;
       $err_urls{transcode}->{$5}->{percent}->{$4} = 100*($err_urls{transcode}->{$5}->{values}->{$4} / $err_urls{transcode}->{$5}->{total});
-      if ($url =~ /\.png$/ || $url =~ /\.jpg$/ || $url =~ /\.gif$/ || $url =~ /\.jpeg$/) {
+      if ($url =~ /\.png$/ || $url =~ /\.jpg$/ || $url =~ /\.gif$/ || $url =~ /\.jpeg$/ || $url =~ /\.ico$/) {
 	$err_urls{transcode}->{$trname}->{image}->{$code} = $err_urls{transcode}->{$trname}->{image}->{$code} + 1;
 	$err_urls{transcode}->{$trname}->{image_total} = $err_urls{transcode}->{$trname}->{image_total} + 1;
 
