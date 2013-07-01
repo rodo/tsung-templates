@@ -11,7 +11,7 @@ gtrans = new Dygraph(document.getElementById("tr_mean"),
 
 gtransrate = new Dygraph(document.getElementById("transrate"),
 			 "csv_data/graphes-Transactions-rate.csv",
-			 graphOptions("Transactions rate",null,"transactions/sec", false)
+			 graphOptions("Transactions rate","transrate_val","transactions/sec", false)
 			);
 
 gperf = new Dygraph(document.getElementById("perfs_mean"),
