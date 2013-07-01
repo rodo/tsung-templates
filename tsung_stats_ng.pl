@@ -726,8 +726,9 @@ sub html_report {
     }
     my %sessions = &read_controller($controller_log);
     my %all_errors = &read_dump($tsung_dump);
-    my $url_errors = %all_errors->{'urls'};
-    my $trans_errors = %all_errors->{'transcode'};
+    my $foo = \%all_errors;
+    my $url_errors = $foo->{'urls'};
+    my $trans_errors = $foo->{'transcode'};
 
     my $vars =
       {
@@ -891,27 +892,57 @@ sub read_controller {
 sub read_dump {
   my ($filename) = @_;
   open FILE, $filename or die "Cannot open $filename : ".$!;
-
+  my %codes = ();
   my (%err_urls);
   while (<FILE>) {
     s/&amp;/&/g;
     if (/^\d+\.\d+;(.*);get;(.*);(.*);(\d{3});\d+;.*;(.*);;$/) {
       my ($host, $url, $code, $trname) = ($2, $3, $4, $5);
-
+      $codes{$4} = $4;
       $err_urls{transcode}->{$5}->{total} = 0 unless (defined($err_urls{transcode}->{$5}->{total}));
       $err_urls{transcode}->{$5}->{image}->{$4} = 0 unless (defined($err_urls{transcode}->{$5}->{image}->{$4}));
+      $err_urls{transcode}->{$5}->{image_total} = 0 unless (defined($err_urls{transcode}->{$5}->{image_total}));
       $err_urls{transcode}->{$5}->{js}->{$4} = 0 unless (defined($err_urls{transcode}->{$5}->{js}->{$4}));
+      $err_urls{transcode}->{$5}->{js_total} = 0 unless (defined($err_urls{transcode}->{$5}->{js_total}));
       $err_urls{transcode}->{$5}->{other}->{$4} = 0 unless (defined($err_urls{transcode}->{$5}->{other}->{$4}));
+      $err_urls{transcode}->{$5}->{other_total} = 0 unless (defined($err_urls{transcode}->{$5}->{other_total}));
       $err_urls{transcode}->{$5}->{values}->{$4} = 0 unless (defined($err_urls{transcode}->{$5}->{values}->{$4}));
       $err_urls{transcode}->{$5}->{values}->{$4} = $err_urls{transcode}->{$5}->{values}->{$4} + 1;
       $err_urls{transcode}->{$5}->{total} = $err_urls{transcode}->{$5}->{total} + 1;
       $err_urls{transcode}->{$5}->{percent}->{$4} = 100*($err_urls{transcode}->{$5}->{values}->{$4} / $err_urls{transcode}->{$5}->{total});
       if ($url =~ /\.png$/ || $url =~ /\.jpg$/ || $url =~ /\.gif$/ || $url =~ /\.jpeg$/) {
 	$err_urls{transcode}->{$trname}->{image}->{$code} = $err_urls{transcode}->{$trname}->{image}->{$code} + 1;
+	$err_urls{transcode}->{$trname}->{image_total} = $err_urls{transcode}->{$trname}->{image_total} + 1;
+
+	for my $lcode (keys(%codes)) {
+	  if (defined($err_urls{transcode}->{$trname}->{image}->{$lcode})) {
+	    $err_urls{transcode}->{$trname}->{image_prct}->{$lcode} = 100 * ($err_urls{transcode}->{$trname}->{image}->{$lcode} / $err_urls{transcode}->{$trname}->{image_total}) ;
+	  } else {
+	    $err_urls{transcode}->{$trname}->{image_prct}->{$lcode} = 0;
+	  }
+	}
       } elsif ($url =~ /\.js$/) {
 	$err_urls{transcode}->{$trname}->{js}->{$code} = $err_urls{transcode}->{$trname}->{js}->{$code} + 1;
+	$err_urls{transcode}->{$trname}->{js_total} = $err_urls{transcode}->{$trname}->{js_total} + 1;
+
+	for my $lcode (keys(%codes)) {
+	  if (defined($err_urls{transcode}->{$trname}->{js}->{$lcode})) {
+	    $err_urls{transcode}->{$trname}->{js_prct}->{$lcode} = 100 * ($err_urls{transcode}->{$trname}->{js}->{$lcode} / $err_urls{transcode}->{$trname}->{js_total}) ;
+	  } else {
+	    $err_urls{transcode}->{$trname}->{js_prct}->{$lcode} = 0;
+	  }
+	}
       } else {
 	$err_urls{transcode}->{$trname}->{other}->{$code} = $err_urls{transcode}->{$trname}->{other}->{$code} + 1;
+	$err_urls{transcode}->{$trname}->{other_total} = $err_urls{transcode}->{$trname}->{other_total} + 1;
+
+	for my $lcode (keys(%codes)) {
+	  if (defined($err_urls{transcode}->{$trname}->{other}->{$lcode})) {
+	    $err_urls{transcode}->{$trname}->{other_prct}->{$lcode} = 100 * ($err_urls{transcode}->{$trname}->{other}->{$lcode} / $err_urls{transcode}->{$trname}->{other_total}) ;
+	  } else {
+	    $err_urls{transcode}->{$trname}->{other_prct}->{$lcode} = 0;
+	  }
+	}
       }
 
       if ($code >= 400) {

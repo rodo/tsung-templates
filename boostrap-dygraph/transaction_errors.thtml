@@ -24,15 +24,25 @@
 	  <td>[% code %]</td>
 	  <td>[% transerrors.$transaction.values.$code %]</td>
 	  <td>[% pf(transerrors.$transaction.percent.$code) %] %</td>
-	  <td>[% transerrors.$transaction.other.$code %]</td>
-	  <td>[% transerrors.$transaction.js.$code %]</td>
-	  <td>[% transerrors.$transaction.image.$code %]</td>
+	  <td>
+	  [% transerrors.$transaction.other.$code %]
+	  ([% pf(transerrors.$transaction.other_prct.$code) %] %)
+	  </td>
+	  <td>[% transerrors.$transaction.js.$code %]
+	  ([% pf(transerrors.$transaction.js_prct.$code) %] %)
+	  </td>
+	  <td>[% transerrors.$transaction.image.$code %]
+	    ([% pf(transerrors.$transaction.image_prct.$code) %] %)
+	  </td>
 	</tr>
 	[% END %]
 	<tr>
 	  <td>total</td>
 	  <td>[% transerrors.$transaction.total %]</td>
 	  <td></td>
+	  <td>[% transerrors.$transaction.other_total %]</td>
+	  <td>[% transerrors.$transaction.js_total %]</td>
+	  <td>[% transerrors.$transaction.image_total %]</td>
 	</tr>
       </table>
 	[% END %]
