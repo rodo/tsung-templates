@@ -93,44 +93,7 @@
       <div id="usersim_val" style="min-height: 15px"></div>
     </div>
   </div>
-  
-  [% IF match %]
-  <div id="match_rate" class="row">
-    <div class="span10">
-      <h4>Match rate</h4>
-      <div id="chart_match_rate" style="width:840px; height:300px;"></div>
-    </div>
-  </div>
-  [% END %]
-  
-  [% IF os_mon %]
-  <div id="os_mon" class="row">
-    <div class="span8">      
-      <h4>Server OS monitoring</h4>
-    </div>
-  </div>
-  <div class="row">
-    <div class="span5">
-      <h5>CPU mean</h5>
-      <div id="cpu_mean" style="width:420px; height:190px;"></div>
-    </div>
-    <div class="span5">
-      <h5>Freemem mean</h5>
-      <div id="freemem_mean" style="width:420px; height:190px;"></div>      
-    </div>
-  </div>
-  <div class="row">
-    <div class="span5">
-      <h5>Load mean</h5>
-      <div id="load_mean" style="width:420px; height:190px;"></div>
-    </div>
-    <div class="span5">
-      <h5>IO mean</h5>
-      <div id="io_mean" style="width:420px; height:190px;"></div>
-    </div>
-  </div>
-  [% END %]
-  
+      
   [% IF http %]
   <div id="http_status" class="row">
     <div class="span10">
@@ -146,6 +109,15 @@
   </div>
   [% END %]
   
+  [% IF match %]
+  <div id="match_rate" class="row">
+    <div class="span10">
+      <h4>Match rate</h4>
+      <div id="chart_match_rate" style="width:840px; height:300px;"></div>
+    </div>
+  </div>
+  [% END %]
+
   [% IF errors %]
   <div id="errors" class="row">
     <div class="span10">
@@ -154,7 +126,6 @@
     </div>
   </div>
   [% END %]
-  
 </div>
 
 <script src="static/js/tsung.graph.common.js" ></script>
@@ -167,9 +138,6 @@
 [% END %]
 [% IF http %]
 <script src="static/js/tsung.graph.http.js" ></script>
-[% END %]
-[% IF os_mon %]
-<script src="static/js/tsung.graph.os_mon.js" ></script>
 [% END %]
 [% IF async %]
 <script src="static/js/tsung.graph.async.js" ></script>
