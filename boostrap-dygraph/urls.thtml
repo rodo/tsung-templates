@@ -4,7 +4,7 @@
 [% USE pf = format('%.5f') %]
 
 <div class="span10">
-  
+  <h3>Transaction : [% USE String(stats_subtitle) %][% String.remove('tr_') %]</h3>  
   <div id="maincontent">
         
     <div id="urlerrors[% code %]">

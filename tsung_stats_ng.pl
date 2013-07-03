@@ -772,6 +772,7 @@ sub html_report {
 	}
       }
 
+      $vars->{stats_subtitle} = $trt;
       $vars->{pagename} = "urls.html";
       $vars->{urlerrors} = $urls;
       $tt->process("urls.thtml", $vars, "urls_$trt.html") or die $tt->error(), " when generating templates\n";
