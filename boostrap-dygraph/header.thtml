@@ -79,7 +79,7 @@ Source : http://github.
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
 
-              <li class="nav-header">[% stats_subtitle %]</li>
+              <li class="nav-header">Stats Report</li>
               <li><a href="report.html#stats">Main statistics</a></li>
               <li><a href="report.html#transaction">Transactions</a></li>
               <li><a href="report.html#network">Network Throughput</a></li>
