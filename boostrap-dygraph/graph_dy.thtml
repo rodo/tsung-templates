@@ -9,12 +9,12 @@
     </div>
     <div class="span2">
       <div>
-      [% FOREACH key = data.keys.sort %]
-      <label class="checkbox" for="[% 99 + data.$key %]">
-	<input type="checkbox" id="[% 99 + data.$key %]" onClick="transchange(gtrans, this, 100)" checked>
-	$key
-      </label>
-      [% END %]
+        [% FOREACH key = data.keys.sort %]
+        <label class="checkbox" for="[% 99 + data.$key %]">
+	      <input type="checkbox" id="[% 99 + data.$key %]" onClick="transchange(gtrans, this, 100)" checked>
+	      $key
+        </label>
+        [% END %]
       </div>
       <div id="tr_mean_val" style="width:390px; min-height:15px;"></div>
       <div id="transrate_val" style="width:390px; min-height:15px;"></div>
@@ -27,15 +27,15 @@
       <div id="perfs_mean" style="width:590px; height:300px;"></div>
     </div>
     <div class="span2">
-      <div class="well">
-	<label for="10">
-	  <input type="checkbox" id="10" onClick="stockchange(gperf, this, 10)" checked>
-	  connect
-	</label>
-	<label for="11">
-	  <input type="checkbox" id="11" onClick="stockchange(gperf, this, 10)" checked>
-	  request
-	</label>
+      <div>
+	    <label for="10">
+	      <input type="checkbox" id="10" onClick="stockchange(gperf, this, 10)" checked>
+	      request
+	    </label>
+	    <label for="11">
+	      <input type="checkbox" id="11" onClick="stockchange(gperf, this, 10)" checked>
+	      connect
+	    </label>
       </div>
 
       <div id="tr_perfs_val" style="width:390px; min-height:15px;">-</div>
