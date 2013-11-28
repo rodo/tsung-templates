@@ -1,7 +1,7 @@
 [% INCLUDE header.thtml %]
 
 <div class="span10">
-  <div id="count" class="row-fluid" >
+  <div id="count" class="row" >
     <h4>Transactions</h4>
     <div class="span8">
       <div id="tr_mean" style="width:590px; height:360px;"></div>
