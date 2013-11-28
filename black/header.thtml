@@ -1,9 +1,10 @@
 <!--
-Templates : boostrap-dygraph
-Source : http://github.
+Template : black
+Source : https://github.com/rodo/tsung-templates/tree/master/black
+Version : 1.0.0
+Author : Rodolphe Quiédeville <rodolphe@quiedeville.org>
 -->
 [% USE date %]
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -11,19 +12,14 @@ Source : http://github.
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Tsung report">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="">
-    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
-
     <title>[% title %] - [% subtitle %] </title>
 
     <!-- Bootstrap core CSS -->
     <link href="static/bootstrap-3.0.2/css/bootstrap.css" rel="stylesheet">
     <!-- Bootstrap theme -->
     <link href="static/bootstrap-3.0.2/css/bootstrap-theme.min.css" rel="stylesheet">
-    <script type="text/javascript" src="static/js/dygraph-combined.js"></script> 
-    <!-- Just for debugging purposes. Don't actually copy this line! -->
-    <!--[if lt IE 9]><script src="../../docs-assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script type="text/javascript" src="static/js/dygraph-combined.js"></script>
+
     <style type="text/css">
     body {
       padding-top: 50px;
@@ -52,19 +48,17 @@ Source : http://github.
         </div>
         <div class="navbar-collapse collapse">
 
-            <p class="navbar-text pull-right">
-              generated : [% date.format %] |
-	      [% IF prev %]
-	      <- <a href="../[% prev %]/[% pagename %]">[% prev %]</a>
-	      [% END %]
-	      [% IF next %]
-	      <a href="../[% next %]/[% pagename %]">[% next %]</a> ->
-	      [% END %]
-            </p>
-
+          <p class="navbar-text pull-right">
+            generated : [% date.format %] |
+	        [% IF prev %]
+	        <- <a href="../[% prev %]/[% pagename %]">[% prev %]</a>
+	           [% END %]
+	           [% IF next %]
+	           <a href="../[% next %]/[% pagename %]">[% next %]</a> ->
+	          [% END %]
+          </p>
 
           <ul class="nav navbar-nav">
-
             <li><a href="report.html">Statistics</a></li>
             <li><a href="graph.html">Graphics</a></li>
 	        [% IF os_mon %]
@@ -77,17 +71,10 @@ Source : http://github.
               <ul class="dropdown-menu">
                 <li><a href="datas.html">Raw datas</a></li>
 	            <li><a href="[% conf %]">XML Config file</a></li>
-                <li><a href="#">Something else here</a></li>
-                <li class="divider"></li>
-                <li class="dropdown-header">Nav header</li>
-                <li><a href="#">Separated link</a></li>
-                <li><a href="#">One more separated link</a></li>
               </ul>
             </li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </div>
-
-
     <div class="container theme-showcase">

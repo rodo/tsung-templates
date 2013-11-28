@@ -16,20 +16,20 @@ gtransrate = new Dygraph(document.getElementById("transrate"),
 
 gperf = new Dygraph(document.getElementById("perfs_mean"),
 		            "csv_data/graphes-Perfs-mean.csv",
-		            graphOptions("Requests response time","tr_perfs_val","msec", false) 
+		            graphOptions("","tr_perfs_val","msec", false) 
 		           );
 
 
 
 greqrate = new Dygraph(document.getElementById("reqrate"),
 		               "csv_data/graphes-Perfs-rate.csv",
-		               graphOptions("Requests rate","reqrate_val","requ/sec", true)
+		               graphOptions("","reqrate_val","requ/sec", true)
 		              );
 
 
 gusersim = new Dygraph(document.getElementById("usersim"),
 		               "csv_data/graphes-Users-simultaneous.csv",
-		               graphOptions("", "usersim_val","users")
+		               graphOptions("", null,"users")
 		              );
 
 garrivalrate = new Dygraph(document.getElementById("arrivalrate"),

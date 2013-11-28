@@ -1,132 +1,131 @@
 [% INCLUDE header.thtml %]
 
-
-  <div id="count" class="row" >
-    <h4>Transactions</h4>
-    <div class="col-md-8">
-      <div id="tr_mean" style="width:590px; height:360px;"></div>
-      <div id="transrate" style="width:590px; height:300px;"></div>
-    </div>
-    <div class="col-md-2">
-      <div>
-        [% FOREACH key = data.keys.sort %]
-        <label class="checkbox" for="[% 99 + data.$key %]">
-	      <input type="checkbox" id="[% 99 + data.$key %]" onClick="transchange(gtrans, this, 100)" checked>
-	      $key
-        </label>
-        [% END %]
-      </div>
-      <div id="tr_mean_val" style="width:390px; min-height:15px;"></div>
-      <div id="transrate_val" style="width:390px; min-height:15px;"></div>
-    </div>
+<div class="row" >
+  <h4>Transactions</h4>
+  <div class="col-md-9">
+    <div id="tr_mean" style="width:840px; height:360px;"></div>
+    <div id="transrate" style="width:840px; height:300px;"></div>
   </div>
-
-  <div class="row">
-    <h4>Requests and connection establishment response time</h4>
-    <div class="col-md-8">
-      <div id="perfs_mean" style="width:590px; height:300px;"></div>
+  <div class="col-md-2">
+    <div>
+      [% FOREACH key = data.keys.sort %]
+      <label class="checkbox" for="[% 99 + data.$key %]">
+	    <input type="checkbox" id="[% 99 + data.$key %]" onClick="transchange(gtrans, this, 100)" checked>
+	    $key
+      </label>
+      [% END %]
     </div>
-    <div class="col-md-2">
-      <div>
-	    <label for="10">
-	      <input type="checkbox" id="10" onClick="stockchange(gperf, this, 10)" checked>
-	      request
-	    </label>
-	    <label for="11">
-	      <input type="checkbox" id="11" onClick="stockchange(gperf, this, 10)" checked>
-	      connect
-	    </label>
-      </div>
-
-      <div id="tr_perfs_val" style="width:390px; min-height:15px;">-</div>
-    </div>
+    <div id="tr_mean_val" style="width:390px; min-height:15px;"></div>
+    <div id="transrate_val" style="width:390px; min-height:15px;"></div>
   </div>
+</div>
 
-  <div class="row">
-    <h4>Requests and connection establishment rate</h4>
-    <div class="col-md-8">
-      <div id="reqrate" style="width:590px; height:300px;"></div>
-    </div>
-    <div class="col-md-2">
-      <div class="well">
-	    <label for="10">
-	      <input type="checkbox" id="10" onClick="stockchange(greqrate, this, 10)" checked>
-	      connect
-	    </label>
-	    <label for="11">
-	      <input type="checkbox" id="11" onClick="stockchange(greqrate, this, 10)" checked>
-	      request
-	    </label>
-      </div>
-      
-      <div id="reqrate_val" style="width:390px; min-height:15px;">-</div>
-    </div>
+<div class="row">
+  <h4>Requests and connection establishment response time</h4>
+  <div class="col-md-9">
+    <div id="perfs_mean" style="width:840px; height:300px;"></div>
   </div>
-  
-  <div id="networktraff" class="row">
-    <div class="col-md-10">
-      <h4>Network traffic</h4>      
-      <div id="size_rate" style="width:840px; height:300px;"></div>
-    </div>    
-  </div>
+  <div class="col-md-2">
+    <div>
+	  <label for="10">
+	    <input type="checkbox" id="10" onClick="stockchange(gperf, this, 10)" checked>
+	    request
+	  </label>
+	  <label for="11">
+	    <input type="checkbox" id="11" onClick="stockchange(gperf, this, 10)" checked>
+	    connect
+	  </label>
+    </div>
 
-  [% IF async %]
-  <div class="row">
-    <div class="col-md-10">
-      <th>Noack/Bidi</th>      
-      <div id="async_rate" style="width:500px; height:300px;"></div>
-    </div>
+    <div id="tr_perfs_val" style="width:390px; min-height:15px;">-</div>
   </div>
-  [% END %]
-  
+</div>
 
-  <div id="users" class="row">
-    <div class="col-md-5">
-      <h4>New Users</h4>
-      <div id="arrivalrate" style="width:420px; height:300px;"></div>
-      <script type="text/javascript">
-      </script>
+<div class="row">
+  <h4>Requests and connection establishment rate</h4>
+  <div class="col-md-9">
+    <div id="reqrate" style="width:840px; height:300px;"></div>
+  </div>
+  <div class="col-md-2">
+    <div class="well">
+	  <label for="10">
+	    <input type="checkbox" id="10" onClick="stockchange(greqrate, this, 10)" checked>
+	    connect
+	  </label>
+	  <label for="11">
+	    <input type="checkbox" id="11" onClick="stockchange(greqrate, this, 10)" checked>
+	    request
+	  </label>
     </div>
     
-    <div class="col-md-5">
-      <h4>Simultaneous Users</h4>
-      <div id="usersim" style="width:420px; height:300px;"></div>
-      <div id="usersim_val" style="min-height: 15px"></div>
-    </div>
+    <div id="reqrate_val" style="width:390px; min-height:15px;">-</div>
   </div>
-      
-  [% IF http %]
-  <div id="http_status" class="row">
-    <div class="col-md-10">
-      <h4>HTTP 200 return code Status (rate)</h4>
-      <div id="http_code_rate" style="width:900px; height:300px;"></div>
-    </div>
-  </div>
-  <div id="http_status" class="row">
-    <div class="col-md-10">
-      <h4>HTTP error return code Status (rate)</h4>
-      <div id="http_code_rate_ko" style="width:900px; height:300px;"></div>
-    </div>
-  </div>
-  [% END %]
-  
-  [% IF match %]
-  <div id="match_rate" class="row">
-    <div class="col-md-10">
-      <h4>Match rate</h4>
-      <div id="chart_match_rate" style="width:840px; height:300px;"></div>
-    </div>
-  </div>
-  [% END %]
+</div>
 
-  [% IF errors %]
-  <div id="errors" class="row">
-    <div class="col-md-10">
-      <h4>Errors (rate)</h4>
-      <div id="errors_rate" style="width:900px; height:300px;"></div>
-    </div>
+<div id="networktraff" class="row">
+  <div class="col-md-10">
+    <h4>Network traffic</h4>      
+    <div id="size_rate" style="width:840px; height:300px;"></div>
+  </div>    
+</div>
+
+[% IF async %]
+<div class="row">
+  <div class="col-md-10">
+    <th>Noack/Bidi</th>      
+    <div id="async_rate" style="width:500px; height:300px;"></div>
   </div>
-  [% END %]
+</div>
+[% END %]
+
+
+<div id="users" class="row">
+  <div class="col-md-5">
+    <h4>New Users</h4>
+    <div id="arrivalrate" style="width:500px; height:300px;"></div>
+    <script type="text/javascript">
+    </script>
+  </div>
+  
+  <div class="col-md-5">
+    <h4>Simultaneous Users</h4>
+    <div id="usersim" style="width:420px; height:300px;"></div>
+    <div id="usersim_val" style="min-height: 15px"></div>
+  </div>
+</div>
+
+[% IF http %]
+<div id="http_status" class="row">
+  <div class="col-md-10">
+    <h4>HTTP 200 return code Status (rate)</h4>
+    <div id="http_code_rate" style="width:900px; height:300px;"></div>
+  </div>
+</div>
+<div id="http_status" class="row">
+  <div class="col-md-10">
+    <h4>HTTP error return code Status (rate)</h4>
+    <div id="http_code_rate_ko" style="width:900px; height:300px;"></div>
+  </div>
+</div>
+[% END %]
+
+[% IF match %]
+<div id="match_rate" class="row">
+  <div class="col-md-10">
+    <h4>Match rate</h4>
+    <div id="chart_match_rate" style="width:840px; height:300px;"></div>
+  </div>
+</div>
+[% END %]
+
+[% IF errors %]
+<div id="errors" class="row">
+  <div class="col-md-10">
+    <h4>Errors (rate)</h4>
+    <div id="errors_rate" style="width:900px; height:300px;"></div>
+  </div>
+</div>
+[% END %]
 
 
 <script src="static/js/tsung.graph.common.js" ></script>
