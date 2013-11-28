@@ -1,0 +1,45 @@
+[% INCLUDE header.thtml %]
+
+[% USE format %]
+[% USE pf = format('%.5f') %]
+
+<div class="span10">
+  
+  <div id="maincontent">
+        
+    <div id="urlerrors[% code %]">
+      [% FOREACH code = urlerrors.keys.sort %]
+      <h3><a href="urlerrors.csv">Error [% code %]</a></h3>
+      <table class="table table-striped">
+	<tr>
+	  <th class="span4">Transaction</th>
+	  <th class="span2">Nb</th>
+	  <th>Url</th>
+	</tr>
+	[% FOREACH key = urlerrors.$code.keys.sort %]
+	[% IF urlerrors.$code.$key.number > 1 %]
+	<tr>
+	  <td>[% USE String(urlerrors.$code.$key.transaction) %][% String.remove('tr_') %]</td>
+	  <td>[% urlerrors.$code.$key.number %]</td>
+	  <td><a href="http://[% urlerrors.$code.$key.host %][% urlerrors.$code.$key.url %]">[% urlerrors.$code.$key.url %]</a></td>
+	</tr>
+	[% END %]
+	[% END %]
+	[% FOREACH key = urlerrors.$code.keys.sort %]
+	[% IF urlerrors.$code.$key.number < 2 %]
+	<tr>
+	  <td>[% USE String(urlerrors.$code.$key.transaction) %][% String.remove('tr_') %]</td>
+	  <td>[% urlerrors.$code.$key.number %]</td>
+	  <td><a href="http://[% urlerrors.$code.$key.host %][% urlerrors.$code.$key.url %]">[% urlerrors.$code.$key.url %]</a></td>
+	</tr>
+	[% END %]
+	[% END %]
+      </table>
+	[% END %]
+    </div>
+
+  </div>
+
+</div><!-- span9 -->
+
+[% INCLUDE footer.thtml %]

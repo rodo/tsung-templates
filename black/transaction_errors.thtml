@@ -1,0 +1,69 @@
+[% INCLUDE header.thtml %]
+
+[% USE format %]
+[% USE pf = format('%.2f') %]
+
+<div class="span10">
+  
+  <div id="maincontent">
+        
+    <div>
+      [% FOREACH transaction = transerrors.keys.sort %]
+      <h3><a href="urls_[% transaction %].html">[% USE String(transaction) %][% String.remove('tr_') %]</a></h3>
+      <table class="table table-striped">
+	<tr>
+	  <th class="span4">code</th>
+	  <th class="span2">Nb</th>
+	  <th class="span2">Percent</th>
+	  <th class="span2">Files</th>
+	  <th class="span2">JS/CSS</th>
+	  <th class="span2">Images</th>
+	</tr>
+	[% FOREACH code = transerrors.$transaction.values.keys.sort %]
+	<tr>
+	  <td>[% code %]</td>
+	  <td>[% transerrors.$transaction.values.$code %]</td>
+	  <td>[% pf(transerrors.$transaction.percent.$code) %] %</td>
+	  <td>
+	    [% IF transerrors.$transaction.other.$code > 0 %]
+	    [% transerrors.$transaction.other.$code %]
+	    ([% pf(transerrors.$transaction.other_prct.$code) %] %)
+	    [% ELSE %]
+	    -
+	    [% END %]
+	  </td>
+	  <td>
+	    [% IF transerrors.$transaction.js.$code > 0 %]
+	    [% transerrors.$transaction.js.$code %]
+	    ([% pf(transerrors.$transaction.js_prct.$code) %] %)
+	    [% ELSE %]
+	    -
+	    [% END %]
+	  </td>
+	  <td>
+	    [% IF transerrors.$transaction.image.$code > 0 %]
+	    [% transerrors.$transaction.image.$code %]
+	    ([% pf(transerrors.$transaction.image_prct.$code) %] %)
+	    [% ELSE %]
+	    -
+	    [% END %]
+	  </td>
+	</tr>
+	[% END %]
+	<tr>
+	  <td>total</td>
+	  <td>[% transerrors.$transaction.total %]</td>
+	  <td></td>
+	  <td>[% transerrors.$transaction.other_total %]</td>
+	  <td>[% transerrors.$transaction.js_total %]</td>
+	  <td>[% transerrors.$transaction.image_total %]</td>
+	</tr>
+      </table>
+	[% END %]
+    </div>
+
+  </div>
+
+</div><!-- span9 -->
+
+[% INCLUDE footer.thtml %]

@@ -1,0 +1,5 @@
+[% FOREACH code = urlerrors.keys.sort %]
+[% FOREACH key = urlerrors.$code.keys.sort %]
+$code;[% USE String(urlerrors.$code.$key.transaction) %][% String.remove('tr_') %];[% urlerrors.$code.$key.number %];[% urlerrors.$code.$key.url %]
+[% END %]
+[% END %]

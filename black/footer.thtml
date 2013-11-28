@@ -1,0 +1,20 @@
+</div><!-- container -->
+<hr />
+
+<footer>
+  <address>
+    <a href="http://tsung.erlang-projects.org">http://tsung.erlang-projects.org/</a>
+    Contact:   <a href="mailto:[% contact %]">[% contact %]</a>
+  </address>
+</footer>
+
+</div><!--/.fluid-container-->
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="static/js/jquery-1.10.2.min.js"></script>
+    <script src="static/bootstrap-3.0.2/js/bootstrap.min.js"></script>
+    <script src="static/bootstrap-3.0.2/js/holder.js"></script>
+</body>
+</html>
