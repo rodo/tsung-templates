@@ -45,13 +45,7 @@ Author : Rodolphe Quiédeville <rodolphe@quiedeville.org>
         <div class="navbar-collapse collapse">
 
           <p class="navbar-text pull-right">
-            generated : [% date.format %] |
-	        [% IF prev %]
-	        <- <a href="../[% prev %]/[% pagename %]">[% prev %]</a>
-	           [% END %]
-	           [% IF next %]
-	           <a href="../[% next %]/[% pagename %]">[% next %]</a> ->
-	          [% END %]
+            generated : [% date.format %]
           </p>
 
           <ul class="nav navbar-nav">
@@ -69,6 +63,7 @@ Author : Rodolphe Quiédeville <rodolphe@quiedeville.org>
 	            <li><a href="[% conf %]">XML Config file</a></li>
               </ul>
             </li>
+            <li><a href="about.html">About</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
