@@ -47,20 +47,16 @@
     <div class="span8">
       <div id="reqrate" style="width:590px; height:300px;"></div>
     </div>
-    <div class="span2">
-      <div class="well">
-	<label for="10">
-	  <input type="checkbox" id="10" onClick="stockchange(greqrate, this, 10)" checked>
-	  connect
-	</label>
-	<label for="11">
-	  <input type="checkbox" id="11" onClick="stockchange(greqrate, this, 10)" checked>
-	  request
-	</label>
-      </div>
-
+    <div class="span2">      
       <div id="reqrate_val" style="width:390px; min-height:15px;">-</div>
     </div>
+  </div>
+  
+  <div id="networktraff" class="row">
+    <div class="span10">
+      <h4>Network traffic</h4>      
+      <div id="size_rate" style="width:840px; height:300px;"></div>
+    </div>    
   </div>
 
   [% IF async %]
@@ -72,13 +68,7 @@
   </div>
   [% END %]
   
-  <div id="networktraff" class="row">
-    <div class="span10">
-      <h4>Network traffic</h4>      
-      <div id="size_rate" style="width:840px; height:300px;"></div>
-    </div>    
-  </div>
-  
+
   <div id="users" class="row">
     <div class="span5">
       <h4>New Users</h4>

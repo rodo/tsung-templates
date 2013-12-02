@@ -87,7 +87,7 @@
 <div id="http_status" class="row">
   <div class="col-md-10">
     <h4>HTTP 200 return code Status (rate)</h4>
-    <div id="http_code_rate" style="width:900px; height:300px;"></div>
+    <div id="http_code_rate" style="width:840px; height:300px;"></div>
   </div>
 </div>
 <div id="http_status" class="row">
@@ -116,18 +116,18 @@
 </div>
 [% END %]
 
-
-<script src="static/js/tsung.graph.common.js" ></script>
-<script src="static/js/tsung.graph.js" ></script>
+<script src="static/js/tsung.graph.common.js"></script>
+<script src="static/js/tsung.graph.js"></script>
+<script src="static/js/tsung.graph.http.js"></script>
 [% IF match %]
-<script src="static/js/tsung.graph.match.js" ></script>
+<script src="static/js/tsung.graph.match.js"></script>
 [% END %]
 [% IF errors %]
-<script src="static/js/tsung.graph.errors.js" ></script>
+<script src="static/js/tsung.graph.errors.js"></script>
 [% END %]
-[% IF http %]
-<script src="static/js/tsung.graph.http.js" ></script>
-[% END %]
+
+
+
 [% IF async %]
 <script src="static/js/tsung.graph.async.js" ></script>
 [% END %]

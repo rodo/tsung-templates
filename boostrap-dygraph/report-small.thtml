@@ -1,4 +1,4 @@
-[% INCLUDE header_small.thtml %]
+[% INCLUDE header_print.thtml %]
 
 [% USE format %]
 [% USE pf = format('%.5f') %]
@@ -7,8 +7,21 @@
   
   <div id="maincontent">
     
+    <div>
+      <div>[% title %] [% version %]</div>
+        <p class="navbar-text pull-right">
+          generated : [% date.format %] |
+	  [% IF prev %]
+	  <- <a href="../[% prev %]/[% pagename %]">[% prev %]</a>
+	     [% END %]
+	     [% IF next %]
+	     <a href="../[% next %]/[% pagename %]">[% next %]</a> ->
+	    [% END %]
+        </p>	
+    </div>
+
     <div id="stats">
-      <h3><a href="main.csv">Main Statistics</a></h3>
+      <div>Main Statistics</div>
       <table class="table table-striped	table-hover">
 	<tr>
 	  <th>Name</th>
@@ -40,7 +53,7 @@
     </div>
     
     <div id="transaction">
-      <h3><a href="transactions.csv">Transactions Statistics</a></h3>
+      <h3>Transactions Statistics</h3>
       <table class="table table-striped">
 	<tr>
 	  <th>Name</th>
@@ -196,4 +209,4 @@
 
 </div><!-- span9 -->
 
-[% INCLUDE footer.thtml %]
+[% INCLUDE footer_print.thtml %]

@@ -56,7 +56,7 @@ GetOptions( "help",\$help,
             "rotate-xtics",\$rotate_xtics,
             "noextra",\$noextra,
             "img_format=s",\$imgfmt,
-	    "percentile=i@", \@percentile
+            "percentile=i@", \@percentile
           );
 
 &usage if $help or $Getopt::Long::error;
@@ -675,7 +675,7 @@ sub html_report {
 
     # lookup for templates files in templates_dir
     my (@all_templates);
-    my (@standard_templates) = qw(header footer graph graph_dy urls);
+    my (@standard_templates) = qw(header header_print footer_print footer graph graph_dy urls);
     opendir (TDIR, $template_dir) or warn "can't open directory $template_dir";
     while (my $file = readdir (TDIR) ) {
         if ($file =~ /(.*.thtml)$/ or $file =~ /(.*.tcsv)$/) {
